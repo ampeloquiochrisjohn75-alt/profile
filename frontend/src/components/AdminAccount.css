@@ -1,0 +1,54 @@
+/* Admin profile — rows sit inside shared add-admin-panel (AddAdmin.css) */
+
+.admin-account-avatar {
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.admin-account-panel .add-admin-panel-head {
+  margin-bottom: 0;
+  padding-bottom: 18px;
+}
+
+.admin-account-rows {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+}
+
+.admin-account-row {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+  font-size: 0.9rem;
+  align-items: start;
+}
+
+.admin-account-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.admin-account-row:first-child {
+  padding-top: 0;
+}
+
+.admin-account-label {
+  font-weight: 600;
+  color: var(--text-muted, #5c6370);
+}
+
+.admin-account-value {
+  color: var(--text, #1a1d21);
+  word-break: break-word;
+}
+
+@media (max-width: 520px) {
+  .admin-account-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

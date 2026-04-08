@@ -1,0 +1,361 @@
+/* Add / edit student — matches admin dashboard & student list */
+
+.student-form {
+  width: 100%;
+}
+
+.student-form-page {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 0 32px;
+}
+
+/* —— Hero (add flow) —— */
+.student-form-hero {
+  margin-bottom: 22px;
+  padding: 22px 24px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 250, 245, 0.98) 100%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.student-form-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 45%, #ffb347 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.student-form--edit .student-form-hero {
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+
+.student-form-eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+}
+
+.student-form-title {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.student-form--edit .student-form-title {
+  margin-bottom: 0;
+  font-size: 1.35rem;
+}
+
+.student-form-lead {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-width: 560px;
+}
+
+/* —— Card form —— */
+.student-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 0 4px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.student-form-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 92, 0, 0.35) 0%, var(--accent) 50%, rgba(255, 179, 71, 0.6) 100%);
+  opacity: 0.85;
+}
+
+/* —— Sections —— */
+.student-form-section {
+  padding: 22px 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.student-form-section:last-of-type {
+  border-bottom: none;
+}
+
+.student-form-section--nested {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.student-form-section-head {
+  margin-bottom: 18px;
+}
+
+.student-form-section-title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.student-form-section-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* —— Grid —— */
+.student-form-grid {
+  display: grid;
+  gap: 16px 18px;
+}
+
+.student-form-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-group--span2 {
+  grid-column: 1 / -1;
+}
+
+.student-form-password-block {
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(15, 23, 42, 0.1);
+}
+
+/* —— Fields —— */
+.student-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.student-form .form-group label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.student-form .form-group input,
+.student-form .form-group select,
+.student-form .form-group textarea {
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.student-form .form-group input::placeholder,
+.student-form .form-group textarea::placeholder {
+  color: rgba(92, 99, 112, 0.65);
+}
+
+.student-form .form-group input:hover,
+.student-form .form-group select:hover,
+.student-form .form-group textarea:hover {
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.student-form .form-group input:focus,
+.student-form .form-group select:focus,
+.student-form .form-group textarea:focus {
+  outline: none;
+  border-color: rgba(255, 122, 0, 0.45);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.student-form .form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235c6370' d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.student-form .form-group textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.45;
+}
+
+/* —— Repeatable blocks —— */
+.student-form-repeatable {
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.student-form-repeatable:last-of-type {
+  margin-bottom: 14px;
+}
+
+.student-form-repeatable--alert {
+  border-color: rgba(239, 68, 68, 0.15);
+  background: linear-gradient(180deg, rgba(254, 242, 242, 0.5) 0%, var(--surface) 100%);
+}
+
+.student-form-repeatable-label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* —— Buttons —— */
+.student-form-btn {
+  appearance: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.student-form-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.student-form-btn--sm {
+  padding: 7px 14px;
+  font-size: 0.8125rem;
+}
+
+.student-form-btn--primary {
+  background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 55%, #ff9a3d 100%);
+  color: #fff;
+  border-color: rgba(255, 140, 60, 0.5);
+  box-shadow: 0 2px 12px rgba(255, 92, 0, 0.22);
+}
+
+.student-form-btn--primary:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 4px 18px rgba(255, 92, 0, 0.28);
+  transform: translateY(-1px);
+}
+
+.student-form-btn--ghost {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.student-form-btn--ghost:hover {
+  background: rgba(15, 23, 42, 0.07);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+.student-form-btn--outline {
+  background: var(--surface);
+  color: #c24109;
+  border-color: rgba(255, 122, 0, 0.35);
+  background: var(--accent-soft);
+}
+
+.student-form-btn--outline:hover {
+  background: rgba(255, 122, 0, 0.2);
+  border-color: rgba(255, 122, 0, 0.45);
+}
+
+/* —— Footer actions —— */
+.student-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px 24px;
+  margin-top: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.02) 0%, rgba(255, 250, 245, 0.35) 100%);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .student-form-page {
+    padding-bottom: 24px;
+  }
+
+  .student-form-hero {
+    padding: 18px 18px;
+  }
+
+  .student-form-title {
+    font-size: 1.25rem;
+  }
+
+  .student-form-section {
+    padding: 18px 18px 20px;
+  }
+
+  .student-form-grid--2 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group--span2 {
+    grid-column: auto;
+  }
+
+  .student-form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding: 16px 18px 20px;
+  }
+
+  .student-form-actions .student-form-btn {
+    width: 100%;
+  }
+}

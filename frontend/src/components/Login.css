@@ -417,12 +417,14 @@
   }
 
   .login-right {
-    /* place the hero (right panel) above the form on small screens */
-    order: -1;
-    flex: 0 1 auto;
-    padding: 0;
-    margin: 0;
-    min-height: 240px;
+    /* hide the hero (right panel) on small screens - show only the form */
+    display: none;
+  }
+
+  /* ensure the hero's background image is not applied/loaded on mobile */
+  .login-right .login-hero {
+    background-image: none !important;
+    background: none !important;
   }
 
   .login-hero {

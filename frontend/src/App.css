@@ -406,3 +406,35 @@
     height: 44px;
   }
 }
+
+/* Utility: responsive form / table helpers for small screens */
+@media (max-width: 720px) {
+  /* ensure form rows stack and inputs take full width */
+  .form-row,
+  .grid-row,
+  .student-form-grid {
+    flex-direction: column;
+  }
+
+  input,
+  select,
+  textarea,
+  .student-list-input,
+  .student-form .form-group input,
+  .student-form .form-group select,
+  .student-form .form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* make wide lists/tables scrollable on narrow screens */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}

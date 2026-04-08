@@ -2,10 +2,7 @@
  * Call the Express API directly (CORS is enabled on the backend).
  * Override with REACT_APP_API_URL if your API is elsewhere (e.g. http://localhost:5001/api).
  */
-const API_ROOT = (process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000/api').replace(
-  /\/$/,
-  ''
-);
+const API_ROOT = (process.env.REACT_APP_API_URL || '/api').replace(/\/$/, '');
 
 function parseJsonResponse(text) {
   const t = (text || '').trim();
@@ -46,6 +43,21 @@ async function readJsonSafe(res, fallback) {
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
   return token ? { Authorization: 'Bearer ' + token } : {};
+}
+
+// Helper: fetch with timeout to avoid hanging requests when backend is down
+async function fetchWithTimeout(url, opts = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal, ...opts });
+    return res;
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Request timed out — backend not responding');
+    throw err;
+  } finally {
+    clearTimeout(id);
+  }
 }
 
 /** Admin dashboard: summary, chart series, recent activity */
@@ -122,32 +134,32 @@ export async function registerAuth({ email, password, role, studentId, adminId, 
   if (firstName) bodyData.firstName = firstName;
   if (lastName) bodyData.lastName = lastName;
   if (course) bodyData.course = course;
-  const res = await fetch(`${API_ROOT}/auth/register`, {
+  const res = await fetchWithTimeout(`${API_ROOT}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(bodyData),
-  });
+  }, 10000);
   const body = await readJson(res);
   if (!res.ok) throw new Error(body.error || 'Register failed');
   return body;
 }
 
 export async function loginAuth({ studentId, password }) {
-  const res = await fetch(`${API_ROOT}/auth/login`, {
+  const res = await fetchWithTimeout(`${API_ROOT}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ studentId, password }),
-  });
+  }, 10000);
   const body = await readJson(res);
   if (!res.ok) throw new Error(body.error || 'Login failed');
   return body;
 }
 
 export async function getMe() {
-  const res = await fetch(`${API_ROOT}/auth/me`, {
+  const res = await fetchWithTimeout(`${API_ROOT}/auth/me`, {
     method: 'GET',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-  });
+  }, 10000);
   const body = await readJson(res);
   if (!res.ok) throw new Error(body.error || 'Fetch me failed');
   return body;

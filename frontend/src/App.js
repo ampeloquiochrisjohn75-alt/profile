@@ -193,6 +193,7 @@ function App() {
     } catch (err) {
       console.error(err);
       showMessage('Login failed: ' + (err.message || ''), 'error');
+      throw err;
     }
   };
 

@@ -24,7 +24,7 @@
   flex: 1 1 auto;
   min-height: 100vh;
   align-items: stretch;
-  font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   color: var(--text, #1a1d21);
 }
 
@@ -43,18 +43,29 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 120% 80% at 0% 0%, rgba(255, 122, 0, 0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 70% at 100% 100%, rgba(255, 92, 0, 0.07) 0%, transparent 50%),
+    radial-gradient(
+      ellipse 120% 80% at 0% 0%,
+      rgba(255, 122, 0, 0.09) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 100% 100%,
+      rgba(255, 92, 0, 0.07) 0%,
+      transparent 50%
+    ),
     linear-gradient(165deg, #f3f5f9 0%, #eef1f6 50%, #faf8f6 100%);
   z-index: 0;
 }
 
 .login-left-mesh::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   opacity: 0.35;
-  background-image: radial-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-image: radial-gradient(
+    rgba(15, 23, 42, 0.06) 1px,
+    transparent 1px
+  );
   background-size: 24px 24px;
   pointer-events: none;
 }
@@ -93,7 +104,12 @@
   font-size: 0.95rem;
   letter-spacing: 0.05em;
   color: #fff;
-  background: linear-gradient(135deg, var(--accent-2, #ff5c00) 0%, var(--accent, #ff7a00) 50%, #ff9f43 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-2, #ff5c00) 0%,
+    var(--accent, #ff7a00) 50%,
+    #ff9f43 100%
+  );
   box-shadow: 0 8px 24px rgba(255, 92, 0, 0.35);
 }
 
@@ -184,7 +200,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
 .login-password-toggle:hover {
@@ -209,7 +227,12 @@
   letter-spacing: 0.02em;
   color: #fff;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--accent-2, #ff5c00) 0%, var(--accent, #ff7a00) 55%, #ff9a3d 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-2, #ff5c00) 0%,
+    var(--accent, #ff7a00) 55%,
+    #ff9a3d 100%
+  );
   box-shadow:
     0 4px 16px rgba(255, 92, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -309,7 +332,7 @@
   pointer-events: none;
 }
 
-.login-hero[style*='background-image'] .login-hero-scrim {
+.login-hero[style*="background-image"] .login-hero-scrim {
   background: linear-gradient(
     105deg,
     rgba(15, 23, 42, 0.82) 0%,
@@ -394,6 +417,8 @@
   }
 
   .login-right {
+    /* place the hero (right panel) above the form on small screens */
+    order: -1;
     flex: 0 1 auto;
     padding: 0;
     margin: 0;

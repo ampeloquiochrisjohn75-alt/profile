@@ -353,6 +353,8 @@ function App() {
               onNav={handleNav}
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
+              user={user}
+              onLogout={handleLogout}
             />
             <div className="app-content-wrap">
           <main className="app-content">

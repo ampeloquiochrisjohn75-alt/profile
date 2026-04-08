@@ -33,7 +33,9 @@
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .app-sidebar-link:hover {
@@ -111,7 +113,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 150;
+    z-index: 210;
     background: rgba(15, 23, 42, 0.35);
     border: none;
     cursor: pointer;
@@ -124,7 +126,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    z-index: 160;
+    z-index: 220;
     min-height: 100vh;
     max-height: 100vh;
     transform: translateX(-105%);
@@ -134,5 +136,50 @@
 
   .app-sidebar.is-open {
     transform: translateX(0);
+  }
+}
+
+/* User block inside sidebar (shown on small screens) */
+.app-sidebar-user {
+  display: none;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-sidebar .app-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+}
+
+.app-sidebar .app-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.app-sidebar .app-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
+  min-width: 0;
+}
+
+.app-sidebar .app-btn-logout {
+  margin-left: auto;
+  height: 36px;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 960px) {
+  .app-sidebar-user {
+    display: block;
   }
 }

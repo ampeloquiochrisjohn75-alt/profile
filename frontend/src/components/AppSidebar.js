@@ -26,6 +26,8 @@ export default function AppSidebar({
   onNav,
   isOpen,
   onClose,
+  user,
+  onLogout,
 }) {
   const [groups, setGroups] = useState({
     students: true,
@@ -61,11 +63,28 @@ export default function AppSidebar({
     </button>
   );
 
+  const userInitial = (user && user.firstName && String(user.firstName).trim()[0]) || (user && user.studentId && String(user.studentId)[0]) || (user && user.email && String(user.email)[0]) || '?';
+
+  const handleLogoutClick = () => {
+    if (typeof onLogout === 'function') onLogout();
+    if (typeof onClose === 'function') onClose();
+  };
+
   if (role === 'student') {
     return (
       <>
         {isOpen && <button type="button" className="app-sidebar-backdrop" aria-label="Close menu" onClick={onClose} />}
         <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`} aria-label="Main navigation">
+          <div className="app-sidebar-user" aria-hidden={false}>
+            <div className="app-user-chip">
+              <span className="app-user-avatar" aria-hidden>{String(userInitial).toUpperCase()}</span>
+              <div className="app-user-meta">
+                <span className="app-user-id" title={user && user.studentId}>{user && (user.studentId || user.email || user.firstName || '')}</span>
+                <span className="app-user-role">{user && user.role}</span>
+              </div>
+              <button type="button" className="app-btn-logout" onClick={handleLogoutClick}>Sign out</button>
+            </div>
+          </div>
           <nav className="app-sidebar-nav">
             {navBtn('home', 'Dashboard', view === 'home')}
             {navBtn('profile', 'Profile', view === 'profile')}
@@ -79,6 +98,16 @@ export default function AppSidebar({
     <>
       {isOpen && <button type="button" className="app-sidebar-backdrop" aria-label="Close menu" onClick={onClose} />}
       <aside className={`app-sidebar${isOpen ? ' is-open' : ''}`} aria-label="Main navigation">
+        <div className="app-sidebar-user" aria-hidden={false}>
+          <div className="app-user-chip">
+            <span className="app-user-avatar" aria-hidden>{String(userInitial).toUpperCase()}</span>
+            <div className="app-user-meta">
+              <span className="app-user-id" title={user && user.studentId}>{user && (user.studentId || user.email || user.firstName || '')}</span>
+              <span className="app-user-role">{user && user.role}</span>
+            </div>
+            <button type="button" className="app-btn-logout" onClick={handleLogoutClick}>Sign out</button>
+          </div>
+        </div>
         <nav className="app-sidebar-nav">
           {navBtn('home', 'Dashboard', view === 'home')}
 

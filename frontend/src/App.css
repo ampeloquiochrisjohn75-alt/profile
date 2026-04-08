@@ -79,7 +79,7 @@
 }
 
 .app-header::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -341,6 +341,46 @@
   }
 }
 
+/* Mobile header adjustments to avoid overlapping header items */
+@media (max-width: 960px) {
+  .app-header-inner {
+    align-items: center;
+    padding: 10px 14px 12px;
+    gap: 10px;
+  }
+
+  .app-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .app-brand-text {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .app-brand-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* hide primary nav on small screens — navigation moves to the sidebar/menu button */
+  .app-nav {
+    display: none;
+  }
+  /* hide header user on small screens — moved into sidebar menu */
+  .app-header-user {
+    display: none;
+  }
+
+  /* collapse header meta where visible */
+  .app-user-meta {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .app-brand-tagline {
     display: none;
@@ -348,5 +388,21 @@
 
   .app-user-meta {
     max-width: 120px;
+  }
+}
+
+/* Reduce content padding and tweak brand on small screens for better fit */
+@media (max-width: 480px) {
+  .app-content {
+    padding: 16px 12px 28px;
+  }
+
+  .app-brand-title {
+    font-size: 0.95rem;
+  }
+
+  .app-menu-btn {
+    width: 44px;
+    height: 44px;
   }
 }

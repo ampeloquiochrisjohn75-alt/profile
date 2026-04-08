@@ -94,7 +94,7 @@ export default function Login({ onLogin, onSwitchToRegister }) {
                 SP
               </div>
             )}
-            <h1 className="login-title">Welcome back</h1>
+            <h1 className="login-title">Welcome baaaaack</h1>
             <p className="login-lead">Sign in with your student or admin ID to continue.</p>
           </div>
 

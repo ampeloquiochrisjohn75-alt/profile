@@ -7,9 +7,25 @@ const app = express();
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://labiagalorenzo13_db_user:SssGsIdweezd3glB@studentprofiling.3w5hi5f.mongodb.net/profiling_db?appName=Studentprofiling";
 
+// Configure CORS: allow local dev and optional production client (set via CLIENT_URL)
+// Example: CLIENT_URL=https://your-app.vercel.app or comma-separated list
+const CLIENT_URL = process.env.CLIENT_URL || '';
+// Add the deployed frontend origin by default so Render+Vercel deployments work
+const DEFAULT_ALLOWED = ['http://localhost:3000', 'http://localhost:3001', 'https://profile-vert-tau.vercel.app'];
+const allowedOrigins = CLIENT_URL
+  ? CLIENT_URL.split(',').map((u) => u.trim())
+  : DEFAULT_ALLOWED;
+
+console.log('CORS allowed origins:', allowedOrigins);
+
 app.use(
   cors({
-    origin: true,
+    origin: function (origin, callback) {
+      // allow non-browser requests like curl/postman
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+      return callback(new Error('CORS not allowed by server'));
+    },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })

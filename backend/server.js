@@ -9,7 +9,7 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://labiagalorenzo13_db_us
 
 // Configure CORS: allow local dev and optional production client (set via CLIENT_URL)
 // Example: CLIENT_URL=https://your-app.vercel.app or comma-separated list
-const CLIENT_URL = process.env.CLIENT_URL || '';
+const CLIENT_URL = process.env.CLIENT_URL || 'https://profile-vert-tau.vercel.app';
 // Add the deployed frontend origin by default so Render+Vercel deployments work
 const DEFAULT_ALLOWED = ['http://localhost:3000', 'http://localhost:3001', 'https://profile-vert-tau.vercel.app'];
 const allowedOrigins = CLIENT_URL

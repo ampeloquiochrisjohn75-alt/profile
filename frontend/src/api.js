@@ -4,6 +4,26 @@
  */
 const API_ROOT = (process.env.REACT_APP_API_URL || '/api').replace(/\/$/, '');
 
+// Simple in-memory cache to avoid repeated identical requests during a single session
+const _studentsCache = new Map();
+
+// General purpose short-lived cache (key -> { value, expiry })
+const _cache = new Map();
+
+function cacheGet(key) {
+  const entry = _cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiry) {
+    _cache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function cacheSet(key, value, ttlMs = 60000) {
+  _cache.set(key, { value, expiry: Date.now() + ttlMs });
+}
+
 function parseJsonResponse(text) {
   const t = (text || '').trim();
   if (!t) return {};
@@ -62,11 +82,16 @@ async function fetchWithTimeout(url, opts = {}, timeoutMs = 10000) {
 
 /** Admin dashboard: summary, chart series, recent activity */
 export async function fetchDashboardStats() {
+  const cacheKey = 'dashboard:stats';
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   const res = await fetch(`${API_ROOT}/dashboard/stats`, {
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
   });
   const body = await readJson(res);
   if (!res.ok) throw new Error(body.error || 'Could not load dashboard');
+  cacheSet(cacheKey, body, 60 * 1000);
   return body;
 }
 
@@ -78,8 +103,14 @@ export async function fetchStudents(params = {}) {
   if (params.q) qs.set('q', params.q);
   if (params.page) qs.set('page', params.page);
   if (params.limit) qs.set('limit', params.limit);
+  const key = `students:${String(params.skill||'')}::${String(params.activity||'')}::${String(params.department||'')}::${String(params.q||'')}::${String(params.page||'1')}::${String(params.limit||'20')}::${localStorage.getItem('token')||''}`;
+  if (_studentsCache.has(key)) return _studentsCache.get(key);
+
   const res = await fetch(`${API_ROOT}/students?${qs.toString()}`, { headers: { ...getAuthHeaders() } });
-  return readJsonSafe(res, { data: [], total: 0, page: 1, pages: 1 });
+  const body = await readJsonSafe(res, { data: [], total: 0, page: 1, pages: 1 });
+  // cache the result (even fallbacks) to prevent repeated failing network calls
+  _studentsCache.set(key, body);
+  return body;
 }
 
 export async function createStudent(data) {
@@ -177,12 +208,17 @@ export async function fetchAdmins() {
 export async function fetchSkillStats(limit = 20) {
   const qs = new URLSearchParams();
   if (limit) qs.set('limit', String(limit));
+  const cacheKey = `skillstats:${limit}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
   const res = await fetch(`${API_ROOT}/students/stats/skills?${qs.toString()}`, {
     method: 'GET',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
   });
   const body = await readJson(res);
   if (!res.ok) throw new Error(body.error || 'Fetch skill stats failed');
+  cacheSet(cacheKey, body, 60 * 1000);
   return body;
 }
 

@@ -1,24 +1,31 @@
 import React, { useState } from 'react';
+import { useAccess } from '../context/AccessContext';
 import StudentForm from './StudentForm';
 import SkillLevelPicker from './SkillLevelPicker';
 import SkillIcon from './SkillIcon';
 import './StudentProfile.css';
 
-export default function StudentProfile({ student, currentUser, onBack, onUpdate, onDelete, initialEditing = false }){
+export default function StudentProfile({ student, currentUser, onBack, onUpdate, onDelete, initialEditing = false, onEditingChange }){
   const [editing, setEditing] = useState(false);
+  const access = useAccess();
   React.useEffect(() => {
     if (initialEditing) setEditing(true);
   }, [initialEditing]);
+
+  // keep parent informed when editing state changes
+
+  // Inform parent about editing state so it can avoid navigating away
+  React.useEffect(() => {
+    if (typeof onEditingChange === 'function') onEditingChange(!!editing);
+  }, [editing, onEditingChange]);
 
   if (!student) return null;
 
   const handleUpdate = async (data) => {
     if (onUpdate) await onUpdate(student._id, data);
-    if (currentUser && currentUser.role === 'admin') {
-      setEditing(true);
-    } else {
-      setEditing(false);
-    }
+    // Close the editor after a successful save for both admin and owner flows
+    setEditing(false);
+    if (typeof onEditingChange === 'function') onEditingChange(false);
   };
 
   const handleDelete = async () => {
@@ -28,7 +35,7 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
 
   const canEdit =
     currentUser &&
-    (currentUser.role === 'admin' || String(currentUser.studentId || '') === String(student.studentId || ''));
+    (access.isAdmin || String(currentUser.studentId || '') === String(student.studentId || ''));
 
   const initials =
     [student.firstName, student.lastName]
@@ -61,15 +68,15 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
             {initials}
           </div>
           <div className="student-profile-hero-actions">
-            <button type="button" className="student-profile-btn student-profile-btn--ghost" onClick={onBack}>
+            <button type="button" className="student-profile-btn student-profile-btn--ghost" onClick={() => { if (typeof onEditingChange === 'function') onEditingChange(false); if (typeof onBack === 'function') onBack(); }}>
               Back
             </button>
             {!editing && canEdit && (
               <>
-                <button type="button" className="student-profile-btn student-profile-btn--primary" onClick={() => setEditing(true)}>
+                <button type="button" className="student-profile-btn student-profile-btn--primary" onClick={() => { if (typeof onEditingChange === 'function') onEditingChange(true); setEditing(true); }}>
                   Edit
                 </button>
-                {currentUser && currentUser.role === 'admin' && (
+                {access.isAdmin && (
                   <button type="button" className="student-profile-btn student-profile-btn--danger" onClick={handleDelete}>
                     Delete
                   </button>
@@ -190,16 +197,17 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
             <p className="student-profile-panel-sub">Update profile details and save</p>
           </div>
           <div className="student-profile-edit-body">
-            {currentUser && currentUser.role === 'admin' ? (
-              <StudentForm initial={student} onSubmit={handleUpdate} onCancel={() => setEditing(false)} allowSkills={false} />
+            {access.isAdmin ? (
+              <StudentForm initial={student} onSubmit={handleUpdate} onCancel={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }} allowSkills={false} />
             ) : (
               <StudentSkillsForm
                 initial={student}
                 onSubmit={async (payload) => {
                   await handleUpdate(payload);
                   setEditing(false);
+                  if (typeof onEditingChange === 'function') onEditingChange(false);
                 }}
-                onCancel={() => setEditing(false)}
+                onCancel={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }}
               />
             )}
           </div>

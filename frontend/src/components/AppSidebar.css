@@ -11,6 +11,12 @@
   box-sizing: border-box;
   min-height: 0;
   overflow-y: auto;
+  /* fixed position on desktop so the sidebar never scrolls with content */
+  position: fixed;
+  left: 0;
+  top: 72px; /* sits below the sticky header */
+  height: calc(100vh - 72px);
+  z-index: 180; /* keep below header (z-index:200) */
 }
 
 .app-sidebar-nav {

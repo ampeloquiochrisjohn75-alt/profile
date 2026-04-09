@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getMe, fetchSkillStats, fetchStudents } from '../api';
+import { fetchSkillStats, fetchStudents } from '../api';
 import SkillIcon from './SkillIcon';
 import './StudentHome.css';
 
@@ -11,20 +11,23 @@ function initials(firstName, lastName, studentId) {
   return '?';
 }
 
-export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0 }) {
-  const [profile, setProfile] = useState(null);
+export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0, profile: initialProfile = null }) {
+  const [profile, setProfile] = useState(initialProfile || null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
   const [skillsMaxPct, setSkillsMaxPct] = useState(100);
   const [peers, setPeers] = useState([]);
 
   useEffect(() => {
+    // keep local profile state in sync with prop updates
+    setProfile(initialProfile || null);
+  }, [initialProfile]);
+
+  useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const me = await getMe();
         if (!mounted) return;
-        setProfile(me.profile || me.user || null);
         try {
           const s = await fetchSkillStats(5);
           if (mounted && s && s.data) {
@@ -36,22 +39,27 @@ export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0
           console.warn('fetchSkillStats failed', e.message);
         }
         try {
-          const topSkillRaw = (me.profile && me.profile.skills && me.profile.skills[0]) || null;
+          // prefer the prop-supplied profile (initialProfile) to avoid using a stale state value
+          const p = initialProfile || null;
+          const topSkillRaw = (p && p.skills && p.skills[0]) || null;
           const topSkill = topSkillRaw ? (typeof topSkillRaw === 'string' ? topSkillRaw : topSkillRaw.name) : null;
           if (topSkill) {
             const list = await fetchStudents({ skill: topSkill, limit: 5 });
             if (mounted && list && list.data) {
               const filtered = list.data
-                .filter((st) => String(st.email || '') !== String(me.profile.email || ''))
+                .filter((st) => String(st.email || '') !== String((p && p.email) || ''))
                 .slice(0, 5);
               setPeers(filtered);
             }
+          } else {
+            // no top skill — clear peers
+            if (mounted) setPeers([]);
           }
         } catch (e) {
           console.warn('fetch peers failed', e.message);
         }
       } catch (err) {
-        console.warn('StudentHome getMe failed', err.message);
+        console.warn('StudentHome failed', err.message);
         setProfile(null);
       } finally {
         if (mounted) setLoading(false);
@@ -60,7 +68,7 @@ export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0
     return () => {
       mounted = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, initialProfile]);
 
   if (loading) {
     return (

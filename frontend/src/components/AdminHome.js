@@ -27,6 +27,8 @@ export default function AdminHome({ onOpenProfile, onAddStudent, onOpenDepartmen
 
   useEffect(() => {
     let mounted = true;
+
+    // Fetch recent students (critical path) and render them as soon as available
     (async () => {
       setLoading(true);
       try {
@@ -35,19 +37,29 @@ export default function AdminHome({ onOpenProfile, onAddStudent, onOpenDepartmen
         setRecent(res.data || []);
         setTotal(res.total ?? 0);
         setPages(res.pages || 1);
-        try {
-          const stats = await fetchSkillStats(5);
-          if (mounted && stats && stats.data) {
-            setTopSkills(stats.data);
-            const max = Math.max(1, ...stats.data.map((s) => s.percent || 0));
-            setSkillsMaxPct(max);
-          }
-        } catch (e) {
-          console.warn('fetchSkillStats failed', e.message);
+      } catch (e) {
+        console.warn('fetchStudents failed', e.message);
+        if (mounted) {
+          setRecent([]);
+          setTotal(0);
         }
-        try {
-          const dash = await fetchDashboardStats();
-          if (!mounted) return;
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    // Fetch non-critical stats in parallel without blocking the main recent list
+    (async () => {
+      try {
+        const [statsRes, dashRes] = await Promise.allSettled([fetchSkillStats(5), fetchDashboardStats()]);
+        if (!mounted) return;
+        if (statsRes.status === 'fulfilled' && statsRes.value && statsRes.value.data) {
+          setTopSkills(statsRes.value.data);
+          const max = Math.max(1, ...statsRes.value.data.map((s) => s.percent || 0));
+          setSkillsMaxPct(max);
+        }
+        if (dashRes.status === 'fulfilled' && dashRes.value) {
+          const dash = dashRes.value;
           const now = new Date();
           const y = now.getFullYear();
           const m = now.getMonth() + 1;
@@ -57,22 +69,12 @@ export default function AdminHome({ onOpenProfile, onAddStudent, onOpenDepartmen
           setDeptCount(dash.totalDepartments ?? 0);
           setWithSkillsCount(dash.studentsWithSkills ?? 0);
           setNewLast7Days(dash.newLast7Days ?? 0);
-        } catch (e) {
-          console.warn('fetchDashboardStats failed', e.message);
-          if (mounted) {
-            setAdminCount(null);
-            setNewThisMonth(null);
-            setDeptCount(null);
-            setWithSkillsCount(null);
-            setNewLast7Days(null);
-          }
         }
-      } catch (e) {
-        console.warn('fetchStudents failed', e.message);
-      } finally {
-        if (mounted) setLoading(false);
+      } catch (err) {
+        console.warn('dashboard parallel fetch failed', err.message || err);
       }
     })();
+
     return () => {
       mounted = false;
     };

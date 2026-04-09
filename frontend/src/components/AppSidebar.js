@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import './AppSidebar.css';
 
 function Chevron({ open }) {
@@ -20,7 +21,7 @@ function Chevron({ open }) {
   );
 }
 
-export default function AppSidebar({
+function AppSidebar({
   role,
   view,
   onNav,
@@ -37,14 +38,17 @@ export default function AppSidebar({
     admins: true,
   });
 
+  const location = useLocation();
+  const pathname = location && location.pathname ? location.pathname : '';
+
   useEffect(() => {
     setGroups((o) => ({
       ...o,
-      students: o.students || ['list', 'add', 'profile'].includes(view),
-      departments: o.departments || ['departments', 'departments-add'].includes(view),
-      admins: o.admins || ['admins-list', 'add-admin'].includes(view),
+      students: o.students || pathname === '/users' || pathname.startsWith('/users/'),
+      departments: o.departments || pathname.startsWith('/departments'),
+      admins: o.admins || pathname.startsWith('/admins'),
     }));
-  }, [view]);
+  }, [pathname]);
 
   const toggle = (key) => {
     setGroups((o) => ({ ...o, [key]: !o[key] }));
@@ -65,7 +69,12 @@ export default function AppSidebar({
     </button>
   );
 
-  const userInitial = (user && user.firstName && String(user.firstName).trim()[0]) || (user && user.studentId && String(user.studentId)[0]) || (user && user.email && String(user.email)[0]) || '?';
+  const userInitial = useMemo(() => (
+    (user && user.firstName && String(user.firstName).trim()[0]) ||
+    (user && user.studentId && String(user.studentId)[0]) ||
+    (user && user.email && String(user.email)[0]) ||
+    '?'
+  ), [user]);
 
   const handleLogoutClick = () => {
     if (typeof onLogout === 'function') onLogout();
@@ -108,8 +117,8 @@ export default function AppSidebar({
             </div>
           </div>
           <nav className="app-sidebar-nav">
-            {navBtn('home', 'Dashboard', view === 'home')}
-            {navBtn('profile', 'Profile', view === 'profile')}
+            {navBtn('home', 'Dashboard', pathname === '/' || pathname === '/dashboard')}
+            {navBtn('profile', 'Profile', pathname === '/profile' || /^\/users\/[^/]+$/.test(pathname))}
           </nav>
         </aside>
       </>
@@ -151,7 +160,7 @@ export default function AppSidebar({
           </div>
         </div>
         <nav className="app-sidebar-nav">
-          {navBtn('home', 'Dashboard', view === 'home')}
+          {navBtn('home', 'Dashboard', pathname === '/' || pathname === '/dashboard')}
 
           <div className="app-sidebar-group">
             <button
@@ -165,8 +174,8 @@ export default function AppSidebar({
             </button>
             {groups.students && (
               <div className="app-sidebar-sub">
-                {navBtn('list', 'View students', view === 'list')}
-                {navBtn('add', 'Add student', view === 'add')}
+                {navBtn('list', 'View students', pathname === '/users')}
+                {navBtn('add', 'Add student', pathname === '/users/add' || view === 'add')}
               </div>
             )}
           </div>
@@ -183,8 +192,8 @@ export default function AppSidebar({
             </button>
             {groups.departments && (
               <div className="app-sidebar-sub">
-                {navBtn('departments', 'View departments', view === 'departments')}
-                {navBtn('departments-add', 'Add department', view === 'departments-add')}
+                {navBtn('departments', 'View departments', pathname === '/departments')}
+                {navBtn('departments-add', 'Add department', pathname === '/departments/add' || view === 'departments-add')}
               </div>
             )}
           </div>
@@ -201,15 +210,17 @@ export default function AppSidebar({
             </button>
             {groups.admins && (
               <div className="app-sidebar-sub">
-                {navBtn('admins-list', 'View admins', view === 'admins-list')}
-                {navBtn('add-admin', 'Add admin', view === 'add-admin')}
+                {navBtn('admins-list', 'View admins', pathname === '/admins')}
+                {navBtn('add-admin', 'Add admin', pathname === '/admins/add' || view === 'add-admin')}
               </div>
             )}
           </div>
 
-          {navBtn('account', 'Profile', view === 'account')}
+          {navBtn('account', 'Profile', pathname === '/account' || view === 'account')}
         </nav>
       </aside>
     </>
   );
 }
+
+export default React.memo(AppSidebar);

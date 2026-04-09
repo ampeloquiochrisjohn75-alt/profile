@@ -12,6 +12,7 @@ function initials(firstName, lastName, studentId) {
 
 export default function StudentList({
   students,
+  loading,
   filters,
   setFilters,
   applyFilters,
@@ -30,6 +31,9 @@ export default function StudentList({
 
   return (
     <div className="student-list-page">
+      {loading && (
+        <div style={{ padding: '1rem', textAlign: 'center' }}>Loading students…</div>
+      )}
       <header className="student-list-header">
         <div className="student-list-header-text">
           <h1 className="student-list-title">Students</h1>

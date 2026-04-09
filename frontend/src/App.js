@@ -1,27 +1,42 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 import './App.css';
-import { fetchStudents, createStudent, fetchStudent, updateStudent, deleteStudent, exportStudentsCSV, loginAuth, registerAuth, getMe } from './api';
+import { createStudent, fetchStudent, updateStudent, deleteStudent, loginAuth, registerAuth } from './api';
 import Departments from './components/Departments';
-import StudentList from './components/StudentList';
+import { AccessProvider } from './context/AccessContext';
 import StudentForm from './components/StudentForm';
-import StudentProfile from './components/StudentProfile';
+import Spinner from './components/Spinner';
 import StudentHome from './components/StudentHome';
 import AdminHome from './components/AdminHome';
 import Login from './components/Login';
 import Register from './components/Register';
 import AddAdmin from './components/AddAdmin';
 import AppSidebar from './components/AppSidebar';
+import { BrowserRouter, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AdminList from './components/AdminList';
 import AdminAccount from './components/AdminAccount';
+import { useAccess } from './context/AccessContext';
+
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const StudentProfile = lazy(() => import('./components/StudentProfile'));
 
 function App() {
-  const [students, setStudents] = useState([]);
+  
   const [view, setView] = useState('list'); // list | add | profile
+  // Prevent navigating away from profile while editing
+  const profileEditLockRef = useRef(false);
+  const setProfileEditing = useCallback((isEditing) => {
+    profileEditLockRef.current = !!isEditing;
+  }, []);
+
+  const setViewTracked = (v) => {
+    // while a profile edit lock is active, don't switch away from the profile view
+    if (profileEditLockRef.current && view === 'profile' && v !== 'profile') return;
+    setView(v);
+  };
   const [authView, setAuthView] = useState('login'); // login | register
   const [selected, setSelected] = useState(null);
   const [profileStartEditing, setProfileStartEditing] = useState(false);
-  const [filters, setFilters] = useState({ skill: '', activity: '', q: '' });
-  const [pageInfo, setPageInfo] = useState({ page: 1, pages: 1, total: 0, limit: 10 });
   const [user, setUser] = useState(() => {
     try {
       const raw = localStorage.getItem('user');
@@ -38,59 +53,14 @@ function App() {
       return false;
     }
   });
+  const navigateRef = useRef(null);
 
   const showMessage = useCallback((msg, type = 'info', timeout = 4000) => {
     setFlash({ msg, type });
     if (timeout > 0) setTimeout(() => setFlash(null), timeout);
   }, []);
 
-  const load = useCallback(async (opts = {}) => {
-    try {
-      const params = {
-        page: opts.page !== undefined ? opts.page : pageInfo.page,
-        limit: opts.limit !== undefined ? opts.limit : pageInfo.limit,
-        skill: opts.skill !== undefined ? opts.skill : filters.skill,
-        activity: opts.activity !== undefined ? opts.activity : filters.activity,
-        q: opts.q !== undefined ? opts.q : filters.q,
-      };
-      const res = await fetchStudents(params);
-      setStudents(res.data || []);
-      setPageInfo({ page: res.page || 1, pages: res.pages || 1, total: res.total || 0, limit: params.limit });
-    } catch (err) {
-      console.error(err);
-      showMessage(err.message || 'Could not load students. Check that the backend is running.', 'error');
-      setStudents([]);
-      setPageInfo((p) => ({ ...p, page: 1, pages: 1, total: 0 }));
-    }
-  }, [filters, pageInfo.page, pageInfo.limit, showMessage]);
-
-  // load() identity changes when filters/page change; post-login init must run only when `user` changes
-  const loadRef = useRef(load);
-  loadRef.current = load;
-
-  useEffect(() => {
-    // when user changes, initialize appropriate view and data
-    (async () => {
-      if (!user) return;
-      if (user.role === 'admin') {
-        await loadRef.current();
-        setView('home');
-        return;
-      }
-      // student: fetch their profile and show home
-      try {
-        const me = await getMe();
-        if (me && me.profile) {
-          setSelected(me.profile);
-          setView('home');
-        } else {
-          setView('home');
-        }
-      } catch (e) {
-        setView('home');
-      }
-    })();
-  }, [user]);
+  // profile fetching is centralized in AuthContext; App listens to profile via useAuth inside AppInner
 
   useEffect(() => {
     try {
@@ -109,10 +79,11 @@ function App() {
   const handleAdd = async (data) => {
     try {
       await createStudent(data);
-      // clear filters and reload page 1 so the newly created student is visible
-      setFilters({ skill: '', activity: '', q: '' });
-      await load({ skill: '', activity: '', q: '', page: 1 });
-      setView('list');
+      // navigate to users page and signal reload (UsersPage listens to this event)
+      if (navigateRef.current) navigateRef.current('/users');
+      else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/users');
+      window.dispatchEvent(new Event('students:reload'));
+      setViewTracked('list');
       showMessage('Student added', 'success');
     } catch (err) {
       console.error(err);
@@ -121,10 +92,18 @@ function App() {
   };
 
   const openProfile = async (id, edit = false) => {
-    const s = await fetchStudent(id);
-    setSelected(s);
-    setProfileStartEditing(edit);
-    setView('profile');
+    try {
+      const s = await fetchStudent(id);
+      // don't update UI if user navigated away from this profile while the request was inflight
+      const currentPath = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '';
+      if (!currentPath.startsWith(`/users/${id}`)) return;
+      setSelected(s);
+      setProfileStartEditing(edit);
+      setViewTracked('profile');
+    } catch (err) {
+      console.error('openProfile failed', err);
+      showMessage('Failed to load profile', 'error');
+    }
   };
 
   const openProfileFromHome = (id, edit = false) => {
@@ -137,11 +116,9 @@ function App() {
       const updated = await updateStudent(id, data);
       // update selected profile immediately
       setSelected(updated);
-      // if admin, update in-memory list to reflect change without full reload
-      if (user && user.role === 'admin') {
-        setStudents(prev => prev.map(s => s._id === updated._id ? updated : s));
-      }
-      setView('profile');
+      // signal list to reload if needed
+      if (user && user.role === 'admin') window.dispatchEvent(new Event('students:reload'));
+      setViewTracked('profile');
       // if student updated their own profile, refresh student home stats
       if (user && user.role === 'student') setHomeRefreshKey(k => k + 1);
       showMessage('Student updated', 'success');
@@ -154,8 +131,8 @@ function App() {
   const handleDelete = async (id) => {
     try {
       await deleteStudent(id);
-      await load();
-      setView('list');
+      window.dispatchEvent(new Event('students:reload'));
+      setViewTracked('list');
       setSelected(null);
       showMessage('Student deleted', 'success');
     } catch (err) {
@@ -163,33 +140,7 @@ function App() {
       showMessage('Failed to delete student: ' + (err.message || ''), 'error');
     }
   };
-
-  const applyFilters = async () => {
-    await load({ skill: filters.skill, activity: filters.activity, q: filters.q, page: 1 });
-  };
-
-  const clearFiltersAndReload = async () => {
-    setFilters({ skill: '', activity: '', q: '' });
-    await load({ skill: '', activity: '', q: '', page: 1 });
-  };
-
-  const changePage = async (nextPage) => {
-    await load({ skill: filters.skill, activity: filters.activity, q: filters.q, page: nextPage });
-  };
-
-  const handleExport = async () => {
-    const csv = await exportStudentsCSV(filters);
-    if (!csv) { showMessage('Export failed', 'error'); return; }
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'students_export.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  };
+  
 
   const handleLogin = async ({ studentId, password }) => {
     try {
@@ -199,17 +150,14 @@ function App() {
       setUser(res.user);
       setAuthView('login');
       showMessage('Login successful', 'success');
-      try {
-        const me = await getMe();
-        if (res.user.role === 'student' && me.profile) {
-          setSelected(me.profile);
-          setView('home');
-        } else if (res.user.role === 'admin') {
-          await load();
-          setView('home');
-        }
-      } catch (err) {
-        console.warn('getMe failed', err.message);
+      if (res.user.role === 'student') {
+        setViewTracked('home');
+        if (navigateRef.current) navigateRef.current('/dashboard');
+        else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/dashboard');
+      } else if (res.user.role === 'admin') {
+        // signal users list to load when admin logs in
+        window.dispatchEvent(new Event('students:reload'));
+        setViewTracked('home');
       }
     } catch (err) {
       console.error(err);
@@ -225,17 +173,13 @@ function App() {
       localStorage.setItem('user', JSON.stringify(res.user));
       setUser(res.user);
       showMessage('Registration successful', 'success');
-      try {
-        const me = await getMe();
-        if (res.user.role === 'student' && me.profile) {
-          setSelected(me.profile);
-          setView('home');
-        } else if (res.user.role === 'admin') {
-          await load();
-          setView('home');
-        }
-      } catch (err) {
-        console.warn('getMe failed', err.message);
+      if (res.user.role === 'student') {
+        setViewTracked('home');
+        if (navigateRef.current) navigateRef.current('/dashboard');
+        else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/dashboard');
+      } else if (res.user.role === 'admin') {
+        window.dispatchEvent(new Event('students:reload'));
+        setViewTracked('home');
       }
     } catch (err) {
       console.error(err);
@@ -247,59 +191,79 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    // ensure sidebar closed so logout returns to a clean login UI
+    setSidebarOpen(false);
+    try {
+      // navigate back to root and notify router
+      if (navigateRef.current) {
+        navigateRef.current('/');
+      } else if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+        window.history.pushState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      } else if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
+    } catch (e) {
+      if (typeof window !== 'undefined') window.location.href = '/';
+    }
   };
 
+  // stabilize logout handler reference to avoid causing repeated sidebar re-renders
+  const stableHandleLogout = useCallback(() => handleLogout(), [/* intentionally none: handleLogout is recreated but we call it */]);
+
   const goHome = async () => {
-    try {
-      const me = await getMe();
-      if (me.profile) setSelected(me.profile);
-      setView('home');
-    } catch (err) {
-      console.warn('getMe failed', err.message);
-      setView('home');
-    }
+    setViewTracked('home');
+    if (navigateRef.current) navigateRef.current('/dashboard');
   };
 
   const goProfile = async () => {
-    try {
-      const me = await getMe();
-      if (me.profile) setSelected(me.profile);
-      setView('profile');
-    } catch (err) {
-      console.warn('getMe failed', err.message);
-      setView('profile');
-    }
+    // navigate to dashboard/profile route; actual profile data will be filled by AuthContext/AppInner
+    setViewTracked('profile');
+    if (navigateRef.current) navigateRef.current('/users');
+    else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/users');
   };
 
   const handleNav = (key) => {
+    // navigation keys from sidebar -> routes
     switch (key) {
       case 'home':
         goHome();
         break;
       case 'list':
-        setView('list');
+        // /users
+        if (navigateRef.current) navigateRef.current('/users');
+        else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/users');
+        setViewTracked('list');
         setSelected(null);
         break;
       case 'add':
-        setView('add');
+        // navigate to add student route and set add view
+        if (navigateRef.current) navigateRef.current('/users/add');
+        else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/users/add');
+        setViewTracked('add');
         break;
       case 'departments':
-        setView('departments');
+        setViewTracked('departments');
         break;
       case 'departments-add':
-        setView('departments-add');
+        setViewTracked('departments-add');
         break;
       case 'admins-list':
-        setView('admins-list');
+        setViewTracked('admins-list');
         break;
       case 'add-admin':
-        setView('add-admin');
+        setViewTracked('add-admin');
         break;
       case 'account':
-        setView('account');
+        setViewTracked('account');
         break;
       case 'profile':
         goProfile();
+        break;
+      case 'reports':
+        // attempt to navigate to /reports
+        if (navigateRef.current) navigateRef.current('/reports');
+        else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/reports');
         break;
       default:
         break;
@@ -311,9 +275,133 @@ function App() {
     (user && user.studentId && String(user.studentId)[0]) ||
     '?';
 
-  return (
-    <div className="App">
-      {!user ? (
+  // Layout that uses react-router location to optionally trigger profile loads and protect routes
+  function AppInner() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const access = useAccess();
+    const auth = useAuth();
+    // expose navigate to outer scope for functions that live outside AppInner
+    useEffect(() => { navigateRef.current = navigate; }, [navigate]);
+
+    const authProfile = auth && auth.profile;
+    const userRoleLocal = user && user.role;
+    const pathname = location && location.pathname ? location.pathname : '';
+    const prevPathRef = React.useRef(null);
+    // Use the top-level `setProfileEditing` to control the edit lock.
+
+    useEffect(() => {
+      // when centralized profile becomes available, set selected/home for students
+        if (authProfile && userRoleLocal && userRoleLocal !== 'admin') {
+        // only auto-switch to home when the current path is the root/dashboard
+        if (pathname === '/' || pathname === '/dashboard' || pathname === '') {
+          setSelected(authProfile);
+          setViewTracked('home');
+        }
+      }
+    }, [authProfile, pathname, userRoleLocal]);
+
+    useEffect(() => {
+      // sync path -> view
+      const p = location.pathname || '';
+      // If a profile edit is in progress on a user path, don't change the view.
+      if (profileEditLockRef.current && p.startsWith('/users/')) {
+        return;
+      }
+      // Prevent duplicate effect runs (React StrictMode double-invoke) from
+      // causing transient view changes — only react when pathname actually changes.
+      if (prevPathRef.current === p) return;
+      prevPathRef.current = p;
+
+      if (p === '/' || p === '/dashboard') {
+        setViewTracked('home');
+      } else if (p === '/users') {
+        setViewTracked('list');
+      } else if (p === '/users/add') {
+        setViewTracked('add');
+      } else if (p.startsWith('/users/')) {
+        // dynamic user id: fetch profile
+        const id = p.split('/')[2];
+        if (id) openProfile(id, false);
+        setViewTracked('profile');
+      } else if (p === '/reports') {
+        // protect reports
+        if (!access.isAdmin) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          setViewTracked('reports');
+        }
+      } else if (p === '/departments' || p === '/departments/add') {
+        setViewTracked(p === '/departments/add' ? 'departments-add' : 'departments');
+      } else if (p === '/admins' || p === '/admins/add') {
+        setViewTracked(p === '/admins/add' ? 'add-admin' : 'admins-list');
+      } else if (p === '/account') {
+        setViewTracked('account');
+      }
+    }, [location.pathname, navigate, access.isAdmin]);
+
+    const handleNavRouter = useCallback(async (key) => {
+      // keep legacy AppSidebar API but use router navigation where applicable
+      switch (key) {
+        case 'home':
+          navigate('/dashboard');
+          break;
+        case 'list':
+          navigate('/users');
+          break;
+        case 'add':
+          navigate('/users/add');
+          break;
+        case 'profile':
+          if (auth && auth.profile && (auth.profile._id || auth.profile.studentId)) {
+            const id = auth.profile._id || auth.profile.studentId;
+            navigate(`/users/${id}`);
+          } else if (auth && typeof auth.refreshProfile === 'function') {
+            try {
+              const p = await auth.refreshProfile();
+              if (p && (p._id || p.studentId)) {
+                const id = p._id || p.studentId;
+                navigate(`/users/${id}`);
+              } else {
+                navigate('/dashboard');
+              }
+            } catch (e) {
+              navigate('/dashboard');
+            }
+          } else {
+            navigate('/dashboard');
+          }
+          break;
+        case 'reports':
+          navigate('/reports');
+          break;
+        case 'departments':
+          navigate('/departments');
+          break;
+        case 'departments-add':
+          navigate('/departments/add');
+          break;
+        case 'admins-list':
+          navigate('/admins');
+          break;
+        case 'add-admin':
+          navigate('/admins/add');
+          break;
+        case 'account':
+          navigate('/account');
+          break;
+        default:
+          // fallback to existing handler
+          handleNav(key);
+          break;
+      }
+    }, [navigate, auth]);
+
+    const handleSidebarClose = useCallback(() => setSidebarOpen(false), []);
+
+    return (
+      <div className="App">
+        {!user ? (
         <div className="auth-container">
           <button
             type="button"
@@ -361,6 +449,7 @@ function App() {
                     src={`${process.env.PUBLIC_URL || ''}/uploads/logo.png`}
                     alt=""
                     className="app-brand-logo"
+                    loading="lazy"
                   />
                 </div>
                 <div className="app-brand-text">
@@ -406,13 +495,13 @@ function App() {
           </header>
           <div className="app-shell">
             <AppSidebar
-              role={user.role}
+              role={access.role}
               view={view}
-              onNav={handleNav}
+              onNav={handleNavRouter}
               isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
+              onClose={handleSidebarClose}
               user={user}
-              onLogout={handleLogout}
+              onLogout={stableHandleLogout}
               darkMode={darkMode}
               onToggleDark={() => setDarkMode(d => !d)}
             />
@@ -424,64 +513,92 @@ function App() {
               </div>
             )}
 
-            {user.role === 'admin' && view === 'list' && (
-              <StudentList
-                students={students}
-                filters={filters}
-                setFilters={setFilters}
-                applyFilters={applyFilters}
-                onClearFilters={clearFiltersAndReload}
-                onExport={handleExport}
-                pageInfo={pageInfo}
-                changePage={changePage}
-                onViewProfile={(id) => openProfile(id, false)}
-                onEditProfile={(id) => openProfile(id, true)}
-                onDelete={handleDelete}
-                onAddStudent={() => setView('add')}
-              />
+            {access.isAdmin && view === 'list' && (
+              <Suspense fallback={<Spinner />}>
+                <UsersPage onAddStudent={() => navigate('/users/add')} />
+              </Suspense>
             )}
 
             {view === 'home' && (
-              user.role === 'admin' ? (
-                <AdminHome onOpenProfile={openProfileFromHome} onAddStudent={() => setView('add')} onOpenDepartments={() => setView('departments')} onAddAdmin={() => setView('add-admin')} currentUser={user} />
+              access.isAdmin ? (
+                <AdminHome onOpenProfile={openProfileFromHome} onAddStudent={() => setViewTracked('add')} onOpenDepartments={() => setViewTracked('departments')} onAddAdmin={() => handleNavRouter('add-admin')} currentUser={user} />
               ) : (
-                <StudentHome onOpenProfile={openProfileFromHome} onGoProfile={goProfile} refreshKey={homeRefreshKey} />
+                <StudentHome
+                  onOpenProfile={openProfileFromHome}
+                  onGoProfile={async () => {
+                    if (auth && auth.profile && (auth.profile._id || auth.profile.studentId)) {
+                      const id = auth.profile._id || auth.profile.studentId;
+                      navigate(`/users/${id}`);
+                      return;
+                    }
+                    if (auth && typeof auth.refreshProfile === 'function') {
+                      try {
+                        const p = await auth.refreshProfile();
+                        if (p && (p._id || p.studentId)) {
+                          const id = p._id || p.studentId;
+                          navigate(`/users/${id}`);
+                          return;
+                        }
+                      } catch (e) {
+                        // fallthrough to dashboard
+                      }
+                    }
+                    navigate('/dashboard');
+                  }}
+                  refreshKey={homeRefreshKey}
+                  profile={auth && auth.profile}
+                />
               )
             )}
 
-            {user.role === 'admin' && (view === 'departments' || view === 'departments-add') && (
+            {access.isAdmin && (view === 'departments' || view === 'departments-add') && (
               <Departments
                 showMessage={showMessage}
                 mode={view === 'departments-add' ? 'add' : 'list'}
-                onGoAdd={() => setView('departments-add')}
+                onGoAdd={() => handleNavRouter('departments-add')}
               />
             )}
 
-            {user.role === 'admin' && view === 'add-admin' && (
-              <AddAdmin onSuccess={() => setView('admins-list')} onCancel={() => setView('admins-list')} showMessage={showMessage} />
+            {access.isAdmin && view === 'add-admin' && (
+              <AddAdmin onSuccess={() => handleNavRouter('admins-list')} onCancel={() => handleNavRouter('admins-list')} showMessage={showMessage} />
             )}
 
             {view === 'add' && (
-              <StudentForm onSubmit={handleAdd} onCancel={() => setView('list')} isRegistration={true} />
+              <StudentForm onSubmit={handleAdd} onCancel={() => setViewTracked('list')} isRegistration={true} />
+            )}
+
+            {view === 'profile' && !selected && (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>
+                <Spinner />
+                <div style={{ marginTop: '0.75rem' }}>Loading profile…</div>
+              </div>
             )}
 
             {view === 'profile' && selected && (
-              <StudentProfile
-                student={selected}
-                currentUser={user}
-                initialEditing={profileStartEditing}
-                onBack={() => { setView(user && user.role === 'admin' ? 'list' : 'home'); setSelected(null); }}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-              />
+              <Suspense fallback={<Spinner />}>
+                <StudentProfile
+                  student={selected}
+                  currentUser={user}
+                  initialEditing={profileStartEditing}
+                  onEditingChange={setProfileEditing}
+                  onBack={() => {
+                    setViewTracked(access.isAdmin ? 'list' : 'home');
+                    setSelected(null);
+                    if (navigateRef.current) navigateRef.current(access.isAdmin ? '/users' : '/dashboard');
+                    else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', access.isAdmin ? '/users' : '/dashboard');
+                  }}
+                  onUpdate={handleUpdate}
+                  onDelete={handleDelete}
+                />
+              </Suspense>
             )}
 
-            {user.role === 'admin' && view === 'account' && (
+            {access.isAdmin && view === 'account' && (
               <AdminAccount user={user} />
             )}
 
-            {user.role === 'admin' && view === 'admins-list' && (
-              <AdminList showMessage={showMessage} onGoAdd={() => setView('add-admin')} />
+            {access.isAdmin && view === 'admins-list' && (
+              <AdminList showMessage={showMessage} onGoAdd={() => handleNavRouter('add-admin')} />
             )}
           </main>
             </div>
@@ -489,6 +606,24 @@ function App() {
         </div>
       )}
     </div>
+    );
+  }
+
+  return (
+    <BrowserRouter>
+      <AuthProvider value={{ user, setUser }}>
+        <AccessProvider>
+          <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<AppInner />} />
+          <Route path="/users" element={<AppInner />} />
+          <Route path="/users/:id" element={<AppInner />} />
+          <Route path="/reports" element={<AppInner />} />
+          <Route path="*" element={<AppInner />} />
+        </Routes>
+      </AccessProvider>
+    </AuthProvider>
+    </BrowserRouter>
   );
 }
 

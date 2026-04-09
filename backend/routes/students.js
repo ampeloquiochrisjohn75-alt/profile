@@ -102,23 +102,35 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// Get list with optional filters: skill, activity, affiliation (admin only)
-router.get('/', requireAuth, requireAdmin, async (req, res) => {
+// Get list with optional filters: skill, activity, affiliation
+// Admins see full list; authenticated students may request a limited peer search by `skill`.
+router.get('/', requireAuth, async (req, res) => {
   try {
     const { skill, activity, affiliation, q, page = 1, limit = 20, department } = req.query;
-    console.log('GET /api/students query:', { skill, activity, affiliation, q, page, limit, department });
-    const filter = {};
-    filter.role = 'student';
+    console.log('GET /api/students query:', { skill, activity, affiliation, q, page, limit, department, user: req.user && req.user.email });
+
+    // Base filter applies to students only
+    const baseFilter = { role: 'student' };
+
+    // If requester is not admin, only allow a limited peer search by `skill` (to avoid exposing full student list)
+    if (req.user.role !== 'admin') {
+      if (!skill) return res.status(403).json({ error: 'Forbidden' });
+      const filter = { ...baseFilter, 'skills.name': { $in: [String(skill).toLowerCase()] } };
+      const lim = Math.max(1, Math.min(20, parseInt(limit, 10) || 5));
+      const students = await Student.find(filter).sort({ createdAt: -1 }).limit(lim).select('firstName lastName studentId skills').populate('department');
+      return res.json({ data: students, total: students.length, page: 1, pages: 1 });
+    }
+
+    // Admin path: full filtering support
+    const filter = { ...baseFilter };
     if (skill) filter['skills.name'] = { $in: [skill.toLowerCase()] };
     if (activity) filter.nonAcademicActivities = { $in: [activity.toLowerCase()] };
     if (affiliation) filter.affiliations = { $in: [affiliation.toLowerCase()] };
     if (department) {
       const mongoose = require('mongoose');
-      // support department as ObjectId or as department name
       if (mongoose.Types.ObjectId.isValid(department)) {
         filter.department = department;
       } else {
-        // match by department name (case-insensitive)
         const Department = require('../models/Department');
         const dep = await Department.findOne({ name: new RegExp('^' + department + '$', 'i') });
         if (dep) filter.department = dep._id;

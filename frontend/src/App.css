@@ -57,6 +57,39 @@
   outline-offset: 2px;
 }
 
+/* Theme toggle button in header */
+.app-btn-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.app-btn-theme-toggle:hover {
+  background: rgba(15, 23, 42, 0.09);
+}
+.app-btn-theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Positioned toggle for the auth screen */
+.auth-theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 600;
+}
+
 /* ——— Header ——— */
 .app-header {
   position: sticky;
@@ -127,7 +160,7 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 4px 14px rgba(255, 92, 0, 0.22);
 }
 

@@ -78,6 +78,11 @@
   padding: clamp(1.75rem, 4vw, 2.5rem);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
 }
 
 .login-card-header {
@@ -111,6 +116,59 @@
     #ff9f43 100%
   );
   box-shadow: 0 8px 24px rgba(255, 92, 0, 0.35);
+}
+
+/* Dark-mode specific adjustments for the login left panel mesh and inputs */
+.dark .login-left-mesh {
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 0% 0%,
+      rgba(96, 165, 250, 0.03) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 100% 100%,
+      rgba(59, 130, 246, 0.02) 0%,
+      transparent 50%
+    ),
+    linear-gradient(165deg, #071129 0%, #061426 45%, #04111a 100%);
+}
+
+.dark .login-left-mesh::after {
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.01) 1px,
+    transparent 1px
+  );
+  opacity: 0.22;
+}
+
+.login-title {
+  color: var(--text);
+}
+
+.login-lead {
+  color: var(--text-muted);
+}
+
+/* Inputs: use surface in both modes; dark mode focus uses accent soft ring */
+.login-input {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.login-input::placeholder {
+  color: rgba(92, 99, 112, 0.65);
+}
+
+.login-input:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.login-input:focus {
+  outline: none;
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .login-title {
@@ -404,6 +462,42 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   backdrop-filter: blur(8px);
+}
+
+/* Remove white background for login card and inputs in light mode.
+   Keep a solid surface in dark mode for readability. */
+.login-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.login-input {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.login-input:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.login-input:focus {
+  outline: none;
+  background: transparent;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.dark .login-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.dark .login-input {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 @media (max-width: 900px) {

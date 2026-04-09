@@ -17,7 +17,7 @@
   margin-bottom: 24px;
   padding: 22px 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 250, 245, 0.98) 100%);
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -25,13 +25,18 @@
 }
 
 .admins-hero::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 45%, #ffb347 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent-2) 0%,
+    var(--accent) 45%,
+    #ffb347 100%
+  );
   border-radius: 16px 16px 0 0;
 }
 
@@ -129,7 +134,12 @@
 }
 
 .admins-btn--primary {
-  background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 55%, #ff9a3d 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-2) 0%,
+    var(--accent) 55%,
+    #ff9a3d 100%
+  );
   color: #fff;
   border-color: rgba(255, 140, 60, 0.5);
   box-shadow: 0 2px 12px rgba(255, 92, 0, 0.22);
@@ -176,7 +186,7 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--accent-2);
-  background: linear-gradient(180deg, rgba(255, 250, 245, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%);
+  background: var(--surface);
 }
 
 .admins-table tbody tr {
@@ -217,7 +227,7 @@
 }
 
 .admins-mono {
-  font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+  font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
@@ -268,7 +278,12 @@
 
 .admins-skeleton {
   border-radius: 8px;
-  background: linear-gradient(90deg, rgba(15, 23, 42, 0.06) 25%, rgba(15, 23, 42, 0.1) 50%, rgba(15, 23, 42, 0.06) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.06) 25%,
+    rgba(15, 23, 42, 0.1) 50%,
+    rgba(15, 23, 42, 0.06) 75%
+  );
   background-size: 200% 100%;
   animation: admins-shimmer 1.2s ease-in-out infinite;
 }
@@ -373,14 +388,14 @@
     text-align: left;
   }
 
-  .admins-table tbody td[data-label='Administrator'] {
+  .admins-table tbody td[data-label="Administrator"] {
     flex-direction: column;
     align-items: stretch;
     text-align: left;
     padding-top: 14px;
   }
 
-  .admins-table tbody td[data-label='Administrator']::before {
+  .admins-table tbody td[data-label="Administrator"]::before {
     margin-bottom: 4px;
   }
 

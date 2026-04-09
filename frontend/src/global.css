@@ -25,6 +25,7 @@ html {
   --accent-2: #ff5c00;
   --accent-soft: rgba(255, 122, 0, 0.14);
   --surface: #ffffff;
+  --surface-elevated: rgba(255, 255, 255, 0.86);
   --text: #1a1d21;
   --text-muted: #5c6370;
   --border: rgba(15, 23, 42, 0.08);
@@ -38,9 +39,126 @@ body {
   width: 100%;
   max-width: 100%;
   min-height: 100vh;
-  font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   background: linear-gradient(165deg, #f0f4f8 0%, #eef1f6 45%, #f7f5f2 100%);
   background-attachment: fixed;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Dark theme variables and overrides
+   Applied when the `dark` class is present on the root element (html) */
+.dark,
+:root.dark {
+  --accent: #60a5fa;
+  --accent-2: #3b82f6;
+  --accent-soft: rgba(96, 165, 250, 0.12);
+  --surface: #0b1220;
+  --text: #e6eef8;
+  --text-muted: #9ca3af;
+  --border: rgba(255, 255, 255, 0.06);
+  --radius: 12px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.65);
+  --surface-elevated: var(--surface);
+}
+
+.dark body {
+  background: linear-gradient(165deg, #071129 0%, #061426 45%, #04111a 100%);
+  color: var(--text);
+}
+
+/* Header, sidebar and surface overrides in dark mode */
+.dark .app-header {
+  background: rgba(6, 10, 16, 0.75);
+  border-bottom-color: var(--border);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  color: var(--text);
+}
+
+.dark .app-sidebar {
+  background: rgba(6, 10, 18, 0.85);
+  border-right-color: var(--border);
+  color: var(--text);
+}
+
+.dark .app-user-chip,
+.dark .flash,
+.dark .app-brand-mark,
+.dark .app-sidebar .app-user-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.dark .app-sidebar-link,
+.dark .app-sidebar-group-toggle,
+.dark .app-nav-btn,
+.dark .app-menu-btn,
+.dark .app-btn-logout {
+  color: var(--text);
+  background: transparent;
+}
+
+.dark .app-sidebar-link:hover,
+.dark .app-sidebar-group-toggle:hover,
+.dark .app-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark .app-brand-mark {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+.dark .app-user-avatar {
+  background: linear-gradient(145deg, #334155 0%, #1e293b 100%);
+  color: #fff;
+}
+
+/* Inputs / selects in dark mode — make controls transparent and borderless per request */
+.dark input,
+.dark select,
+.dark textarea,
+.dark .student-form .form-group input,
+.dark .student-form .form-group select,
+.dark .student-form .form-group textarea,
+.dark .student-list-input {
+  background: transparent;
+  color: var(--text);
+  border: none;
+}
+
+/* Remove dark backgrounds/borders for common panel/card containers in dark mode */
+.dark [class*="card"],
+.dark [class*="panel"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.dark .flash.info {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+}
+.dark .flash.success {
+  background: rgba(34, 197, 94, 0.06);
+  border-color: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+}
+.dark .flash.error {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.12);
+  color: #fecaca;
+}
+
+/* Active nav button subtle inner highlight for dark mode */
+.dark .app-nav-btn.is-active {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }

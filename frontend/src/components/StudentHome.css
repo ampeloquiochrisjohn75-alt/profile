@@ -28,7 +28,12 @@
 
 .student-dash-skeleton {
   border-radius: 14px;
-  background: linear-gradient(90deg, rgba(15, 23, 42, 0.06) 0%, rgba(15, 23, 42, 0.1) 50%, rgba(15, 23, 42, 0.06) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.06) 0%,
+    rgba(15, 23, 42, 0.1) 50%,
+    rgba(15, 23, 42, 0.06) 100%
+  );
   background-size: 200% 100%;
   animation: student-shimmer 1.2s ease-in-out infinite;
 }
@@ -56,7 +61,7 @@
   text-align: center;
   border-radius: 16px;
   border: 1px dashed var(--border);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--surface);
 }
 
 .student-dash-empty-title {
@@ -85,7 +90,7 @@
   margin-bottom: 24px;
   padding: 22px 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 250, 245, 0.98) 100%);
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -93,13 +98,18 @@
 }
 
 .student-dash-hero::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 45%, #ffb347 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent-2) 0%,
+    var(--accent) 45%,
+    #ffb347 100%
+  );
   border-radius: 16px 16px 0 0;
 }
 
@@ -209,7 +219,12 @@
 .student-dash-complete-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 55%, #ffb347 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent-2) 0%,
+    var(--accent) 55%,
+    #ffb347 100%
+  );
   transition: width 0.5s ease;
 }
 
@@ -306,7 +321,7 @@
 }
 
 .student-action-card--primary {
-  background: linear-gradient(145deg, #fff 0%, #fffaf5 100%);
+  background: var(--surface);
   border-color: rgba(255, 122, 0, 0.28);
 }
 
@@ -478,7 +493,12 @@
 .student-network-skill-bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 55%, #ffb347 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent-2) 0%,
+    var(--accent) 55%,
+    #ffb347 100%
+  );
   transition: width 0.4s ease;
 }
 
@@ -574,7 +594,9 @@
   border-radius: 14px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.7);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .student-peer-card:hover {
@@ -638,7 +660,9 @@
   border: 1px solid rgba(255, 122, 0, 0.35);
   color: #c24109;
   background: var(--accent-soft);
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .student-peer-btn:hover {

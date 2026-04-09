@@ -16,7 +16,7 @@
   margin-bottom: 22px;
   padding: 22px 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 250, 245, 0.98) 100%);
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -24,13 +24,18 @@
 }
 
 .student-form-hero::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 45%, #ffb347 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent-2) 0%,
+    var(--accent) 45%,
+    #ffb347 100%
+  );
   border-radius: 16px 16px 0 0;
 }
 
@@ -85,13 +90,18 @@
 }
 
 .student-form-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255, 92, 0, 0.35) 0%, var(--accent) 50%, rgba(255, 179, 71, 0.6) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 92, 0, 0.35) 0%,
+    var(--accent) 50%,
+    rgba(255, 179, 71, 0.6) 100%
+  );
   opacity: 0.85;
 }
 
@@ -230,7 +240,11 @@
 
 .student-form-repeatable--alert {
   border-color: rgba(239, 68, 68, 0.15);
-  background: linear-gradient(180deg, rgba(254, 242, 242, 0.5) 0%, var(--surface) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(254, 242, 242, 0.5) 0%,
+    var(--surface) 100%
+  );
 }
 
 .student-form-repeatable-label {
@@ -276,7 +290,12 @@
 }
 
 .student-form-btn--primary {
-  background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 55%, #ff9a3d 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-2) 0%,
+    var(--accent) 55%,
+    #ff9a3d 100%
+  );
   color: #fff;
   border-color: rgba(255, 140, 60, 0.5);
   box-shadow: 0 2px 12px rgba(255, 92, 0, 0.22);
@@ -320,7 +339,7 @@
   gap: 12px;
   padding: 20px 24px 24px;
   margin-top: 0;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.02) 0%, rgba(255, 250, 245, 0.35) 100%);
+  background: var(--surface);
   border-top: 1px solid var(--border);
 }
 

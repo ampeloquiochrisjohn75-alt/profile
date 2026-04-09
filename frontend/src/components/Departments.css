@@ -17,7 +17,7 @@
   margin-bottom: 24px;
   padding: 22px 24px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 250, 245, 0.98) 100%);
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -25,13 +25,18 @@
 }
 
 .dept-hero::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent-2) 0%, var(--accent) 45%, #ffb347 100%);
+  background: linear-gradient(
+    90deg,
+    var(--accent-2) 0%,
+    var(--accent) 45%,
+    #ffb347 100%
+  );
   border-radius: 16px 16px 0 0;
 }
 
@@ -142,7 +147,7 @@
   padding: 11px 14px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   width: 100%;
   transition:
@@ -200,7 +205,12 @@
 }
 
 .dept-btn--primary {
-  background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 55%, #ff9a3d 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent-2) 0%,
+    var(--accent) 55%,
+    #ff9a3d 100%
+  );
   color: #fff;
   border-color: rgba(255, 140, 60, 0.5);
   box-shadow: 0 2px 12px rgba(255, 92, 0, 0.22);
@@ -236,7 +246,7 @@
 }
 
 .dept-btn--danger {
-  background: #fff;
+  background: var(--surface);
   color: #b91c1c;
   border-color: rgba(185, 28, 28, 0.25);
 }
@@ -393,7 +403,7 @@
 .dept-students-panel {
   padding: 16px 20px 20px;
   border-top: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 250, 245, 0.5) 0%, rgba(255, 255, 255, 0.6) 100%);
+  background: var(--surface);
 }
 
 .dept-students-heading {
@@ -427,7 +437,7 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
 }
 
@@ -527,7 +537,12 @@
 
 .dept-skeleton {
   border-radius: 8px;
-  background: linear-gradient(90deg, rgba(15, 23, 42, 0.06) 25%, rgba(15, 23, 42, 0.1) 50%, rgba(15, 23, 42, 0.06) 75%);
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.06) 25%,
+    rgba(15, 23, 42, 0.1) 50%,
+    rgba(15, 23, 42, 0.06) 75%
+  );
   background-size: 200% 100%;
   animation: dept-shimmer 1.2s ease-in-out infinite;
 }

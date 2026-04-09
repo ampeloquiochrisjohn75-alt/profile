@@ -31,6 +31,13 @@ function App() {
   const [homeRefreshKey, setHomeRefreshKey] = useState(0);
   const [flash, setFlash] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return localStorage.getItem('darkMode') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
 
   const showMessage = useCallback((msg, type = 'info', timeout = 4000) => {
     setFlash({ msg, type });
@@ -84,6 +91,20 @@ function App() {
       }
     })();
   }, [user]);
+
+  useEffect(() => {
+    try {
+      if (darkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('darkMode', 'false');
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [darkMode]);
 
   const handleAdd = async (data) => {
     try {
@@ -294,6 +315,24 @@ function App() {
     <div className="App">
       {!user ? (
         <div className="auth-container">
+          <button
+            type="button"
+            className="app-btn-theme-toggle auth-theme-toggle"
+            onClick={() => setDarkMode((d) => !d)}
+            aria-pressed={darkMode}
+            title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+          >
+            {darkMode ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="12" cy="12" r="4" fill="currentColor" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4" stroke="currentColor" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" fill="currentColor" />
+              </svg>
+            )}
+          </button>
           {authView === 'login' && (
             <Login onLogin={handleLogin} onSwitchToRegister={() => setAuthView('register')} />
           )}
@@ -341,6 +380,24 @@ function App() {
                     <span className="app-user-role">{user.role}</span>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="app-btn-theme-toggle"
+                  onClick={() => setDarkMode((d) => !d)}
+                  aria-pressed={darkMode}
+                  title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+                >
+                  {darkMode ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <circle cx="12" cy="12" r="4" fill="currentColor" />
+                      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4" stroke="currentColor" />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" fill="currentColor" />
+                    </svg>
+                  )}
+                </button>
                 <button type="button" className="app-btn-logout" onClick={handleLogout}>
                   Sign out
                 </button>
@@ -356,6 +413,8 @@ function App() {
               onClose={() => setSidebarOpen(false)}
               user={user}
               onLogout={handleLogout}
+              darkMode={darkMode}
+              onToggleDark={() => setDarkMode(d => !d)}
             />
             <div className="app-content-wrap">
           <main className="app-content">

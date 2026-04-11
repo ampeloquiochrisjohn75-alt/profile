@@ -78,20 +78,12 @@ export default function AddAdmin({ onSuccess, onCancel, showMessage }) {
             students, departments, and other admins.
           </p>
         </div>
-        <div className="add-admin-hero-aside">
+          <div className="add-admin-hero-aside">
           <div className="add-admin-hero-badge" aria-hidden>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
-          {onCancel && (
-            <button type="button" className="add-admin-btn add-admin-btn--ghost" onClick={onCancel}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Back to list
-            </button>
-          )}
         </div>
       </header>
 

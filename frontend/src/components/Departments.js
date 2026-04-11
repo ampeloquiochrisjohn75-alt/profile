@@ -225,31 +225,45 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
                 </div>
                 {!editing || editing._id !== d._id ? (
                   <div className="dept-card-actions">
-                    <button type="button" className="dept-btn dept-btn--ghost dept-btn--sm" onClick={() => setEditing({ ...d })}>
-                      Edit
-                    </button>
                     <button
                       type="button"
-                      className={`dept-btn dept-btn--outline dept-btn--sm${expanded[d._id] ? ' is-active' : ''}`}
+                      className="dept-action-btn"
+                      title="Edit"
+                      aria-label={`Edit ${d.name}`}
+                      onClick={() => setEditing({ ...d })}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`dept-action-btn${expanded[d._id] ? ' is-active' : ''}`}
                       onClick={() => toggleStudents(d)}
                       aria-expanded={!!expanded[d._id]}
+                      title="Toggle students"
+                      aria-label={`Toggle students in ${d.name}`}
                     >
-                      Students
-                      <svg
-                        className={`dept-chevron${expanded[d._id] ? ' is-open' : ''}`}
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        aria-hidden
-                      >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <path d="M6 9l6 6 6-6" />
                       </svg>
                     </button>
-                    <button type="button" className="dept-btn dept-btn--danger dept-btn--sm" onClick={() => handleDelete(d._id)}>
-                      Delete
+
+                    <button
+                      type="button"
+                      className="dept-action-btn dept-action-btn--danger"
+                      title="Delete"
+                      aria-label={`Delete ${d.name}`}
+                      onClick={() => handleDelete(d._id)}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                      </svg>
                     </button>
                   </div>
                 ) : null}

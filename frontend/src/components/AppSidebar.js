@@ -216,7 +216,7 @@ function AppSidebar({
             )}
           </div>
 
-          {navBtn('account', 'Profile', pathname === '/account' || view === 'account')}
+          {/* Profile moved to header account menu */}
         </nav>
       </aside>
     </>

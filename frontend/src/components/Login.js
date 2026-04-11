@@ -1,11 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Login.css';
 
-export default function Login({ onLogin, onSwitchToRegister }) {
+export default function Login({ onLogin, onSwitchToRegister, onForgotPassword }) {
   const [studentId, setStudentId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const forgotRef = useRef(null);
+
+  useEffect(() => {
+    if (!showForgotModal) return;
+    function onDoc(e) {
+      if (!forgotRef.current) return;
+      if (!forgotRef.current.contains(e.target)) setShowForgotModal(false);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setShowForgotModal(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showForgotModal]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -149,14 +170,23 @@ export default function Login({ onLogin, onSwitchToRegister }) {
             </button>
           </form>
 
-          {typeof onSwitchToRegister === 'function' && (
-            <p className="login-alt">
-              New here?{' '}
-              <button type="button" className="login-alt-link" onClick={onSwitchToRegister}>
-                Create an account or forgot password nalang ilagay??
-              </button>
-            </p>
-          )}
+          <p className="login-alt">
+            <button
+              type="button"
+              className="login-alt-link"
+              onClick={async () => {
+                if (typeof onForgotPassword === 'function') {
+                  onForgotPassword();
+                  return;
+                }
+                setShowForgotModal(true);
+              }}
+            >
+              Forgot your password?
+            </button>
+          </p>
+
+          
         </div>
       </div>
 
@@ -180,6 +210,26 @@ export default function Login({ onLogin, onSwitchToRegister }) {
           </div>
         </div>
       </div>
+      {showForgotModal && (
+        <div className="forgot-modal-overlay" role="dialog" aria-modal="true">
+          <div className="forgot-modal" ref={forgotRef}>
+            <button type="button" className="forgot-modal-close" onClick={() => setShowForgotModal(false)} aria-label="Close">×</button>
+            <h2>Student Profiling Account Assistance</h2>
+            <p>Having trouble signing in? We're here to help you recover access to your account.</p>
+            <p>If you are sure that your login credentials are correct but you still receive an “Invalid login credential” message, your account may require administrator verification.</p>
+            <p>Please contact the system administrator for assistance.</p>
+            <p>When contacting the administrator, kindly provide the following information:</p>
+            <ul>
+              <li>Your Full Name</li>
+              <li>Your Student ID</li>
+              <li>A brief description of the issue</li>
+              <li>A photo of your Student ID (if available)</li>
+            </ul>
+            <p>You may use the Facebook link below to reach the administrator team quickly. If you do not use Facebook, you may also ask a faculty member on site to help escalate your request to the administrator.</p>
+            <p><a href="https://www.youtube.com/watch?v=Aq5WXmQQooo" target="_blank" rel="noopener noreferrer" className="forgot-modal-fb">Contact via Facebook</a></p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -20,6 +20,82 @@ import { useAccess } from './context/AccessContext';
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const StudentProfile = lazy(() => import('./components/StudentProfile'));
 
+function HeaderAccount({ user, userInitial, darkMode, setDarkMode, onProfile, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function onDoc(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  return (
+    <div className="app-header-user">
+      <div className="app-user-chip">
+        <span className="app-user-avatar" aria-hidden>
+          {String(userInitial).toUpperCase()}
+        </span>
+        <div className="app-user-meta">
+          <span className="app-user-id" title={user && user.studentId}>{user && (user.studentId || user.email || user.firstName || '')}</span>
+          <span className="app-user-role">{user && user.role}</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="app-btn-theme-toggle"
+        onClick={() => setDarkMode((d) => !d)}
+        aria-pressed={darkMode}
+        title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
+      >
+        {darkMode ? (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="4" fill="currentColor" />
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4" stroke="currentColor" />
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" fill="currentColor" />
+          </svg>
+        )}
+      </button>
+
+      <div className="app-account" ref={ref}>
+        <button
+          type="button"
+          className="app-account-toggle"
+          onClick={() => setOpen((s) => !s)}
+          aria-haspopup="true"
+          aria-expanded={open}
+          title="Account"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </button>
+        <div className={`app-account-menu${open ? ' is-open' : ''}`} role="menu">
+          <button type="button" className="app-account-menu-item" onClick={() => { setOpen(false); if (typeof onProfile === 'function') onProfile(); }}>Profile</button>
+          <button type="button" className="app-account-menu-item" onClick={() => { setOpen(false); if (typeof onLogout === 'function') onLogout(); }}>Logout</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   
   const [view, setView] = useState('list'); // list | add | profile
@@ -457,40 +533,14 @@ function App() {
                   <span className="app-brand-tagline">Skills, programs & records</span>
                 </div>
               </div>
-              <div className="app-header-user">
-                <div className="app-user-chip">
-                  <span className="app-user-avatar" aria-hidden="true">
-                    {String(userInitial).toUpperCase()}
-                  </span>
-                  <div className="app-user-meta">
-                    <span className="app-user-id" title={user.studentId}>
-                      {user.studentId}
-                    </span>
-                    <span className="app-user-role">{user.role}</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="app-btn-theme-toggle"
-                  onClick={() => setDarkMode((d) => !d)}
-                  aria-pressed={darkMode}
-                  title={darkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-                >
-                  {darkMode ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <circle cx="12" cy="12" r="4" fill="currentColor" />
-                      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M18.4 5.6l1.4-1.4M4.2 19.8l1.4-1.4" stroke="currentColor" />
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" fill="currentColor" />
-                    </svg>
-                  )}
-                </button>
-                <button type="button" className="app-btn-logout" onClick={handleLogout}>
-                  Sign out
-                </button>
-              </div>
+              <HeaderAccount
+                user={user}
+                userInitial={userInitial}
+                darkMode={darkMode}
+                setDarkMode={setDarkMode}
+                onProfile={() => navigate('/account')}
+                onLogout={stableHandleLogout}
+              />
             </div>
           </header>
           <div className="app-shell">

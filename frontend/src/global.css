@@ -96,6 +96,17 @@ body {
 .dark .app-sidebar-group-toggle,
 .dark .app-nav-btn,
 .dark .app-menu-btn,
+/* Remove dark-mode borders for student details and department panels */
+.dark .student-profile-panel,
+.dark .student-profile-subcard,
+.dark .student-profile-hero,
+.dark .dept-card,
+.dark .dept-hero,
+.dark .dept-add-panel {
+  border: none !important;
+  box-shadow: none !important;
+}
+
 .dark .app-btn-logout {
   color: var(--text);
   background: transparent;
@@ -129,17 +140,25 @@ body {
 .dark .student-form .form-group select,
 .dark .student-form .form-group textarea,
 .dark .student-list-input {
+  .dark .student-profile-row {
+    border-bottom: none !important;
+  }
   background: transparent;
   color: var(--text);
-  border: none;
+  border: rgb(86, 50, 27) solid 1px;
 }
 
-/* Remove dark backgrounds/borders for common panel/card containers in dark mode */
-.dark [class*="card"],
-.dark [class*="panel"] {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+/* Dark-mode card and panel surfaces
+   Keep subtle elevated surfaces and borders so cards read on dark backgrounds.
+   Exclude the `.login-card` to preserve the specialized auth styling. */
+.dark article[class*="card"]:not(.login-card),
+.dark div[class*="card"]:not(.login-card),
+.dark section[class*="card"]:not(.login-card),
+.dark button[class*="card"]:not(.login-card),
+.dark article[class*="panel"]:not(.login-card),
+.dark div[class*="panel"]:not(.login-card),
+.dark section[class*="panel"]:not(.login-card) {
+  color: var(--text);
 }
 
 .dark .flash.info {

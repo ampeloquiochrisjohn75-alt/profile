@@ -1,8 +1,14 @@
 /**
  * Call the Express API directly (CORS is enabled on the backend).
  * Override with REACT_APP_API_URL if your API is elsewhere (e.g. http://localhost:5001/api).
+ * If the provided REACT_APP_API_URL does not include the `/api` path, append it.
  */
-const API_ROOT = (process.env.REACT_APP_API_URL || '/api').replace(/\/$/, '');
+let API_ROOT = process.env.REACT_APP_API_URL || '/api';
+// If a full URL is provided but doesn't include the /api segment, add it.
+if (API_ROOT && API_ROOT !== '/api' && !/\/api(\/|$)/.test(API_ROOT)) {
+  API_ROOT = API_ROOT.replace(/\/$/, '') + '/api';
+}
+API_ROOT = API_ROOT.replace(/\/$/, '');
 
 // Simple in-memory cache to avoid repeated identical requests during a single session
 const _studentsCache = new Map();
@@ -99,11 +105,12 @@ export async function fetchStudents(params = {}) {
   const qs = new URLSearchParams();
   if (params.skill) qs.set('skill', params.skill);
   if (params.activity) qs.set('activity', params.activity);
+  if (params.courseCode) qs.set('courseCode', params.courseCode);
   if (params.department) qs.set('department', params.department);
   if (params.q) qs.set('q', params.q);
   if (params.page) qs.set('page', params.page);
   if (params.limit) qs.set('limit', params.limit);
-  const key = `students:${String(params.skill||'')}::${String(params.activity||'')}::${String(params.department||'')}::${String(params.q||'')}::${String(params.page||'1')}::${String(params.limit||'20')}::${localStorage.getItem('token')||''}`;
+  const key = `students:${String(params.skill||'')}::${String(params.activity||'')}::${String(params.courseCode||'')}::${String(params.department||'')}::${String(params.q||'')}::${String(params.page||'1')}::${String(params.limit||'20')}::${localStorage.getItem('token')||''}`;
   if (_studentsCache.has(key)) return _studentsCache.get(key);
 
   const res = await fetch(`${API_ROOT}/students?${qs.toString()}`, { headers: { ...getAuthHeaders() } });
@@ -134,6 +141,7 @@ export async function exportStudentsCSV(params = {}) {
   const qs = new URLSearchParams();
   if (params.skill) qs.set('skill', params.skill);
   if (params.activity) qs.set('activity', params.activity);
+  if (params.courseCode) qs.set('courseCode', params.courseCode);
   if (params.q) qs.set('q', params.q);
   const res = await fetch(`${API_ROOT}/students/export?${qs.toString()}`, { headers: { ...getAuthHeaders() } });
   if (!res.ok) return null;
@@ -229,27 +237,253 @@ export async function fetchDepartments() {
   return readJsonSafe(res, { data: [] });
 }
 
-export async function createDepartment(data) {
-  const res = await fetch(`${API_ROOT}/departments`, {
+// Faculty (professors)
+export async function fetchFaculty() {
+  const res = await fetch(`${API_ROOT}/faculty`, {
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+  });
+  const body = await readJsonSafe(res, { data: [] });
+  // backend returns { data: [...] }
+  return body && Array.isArray(body.data) ? body.data : [];
+}
+
+export async function createFaculty(data) {
+  const res = await fetch(`${API_ROOT}/faculty`, {
     method: 'POST',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   const body = await readJson(res);
-  if (!res.ok) throw new Error(body.error || 'Create department failed');
+  if (!res.ok) throw new Error(body.error || 'Create faculty failed');
   return body;
 }
-
-export async function updateDepartment(id, data) {
-  const res = await fetch(`${API_ROOT}/departments/${id}`, {
+export async function updateFaculty(id, data) {
+  const res = await fetch(`${API_ROOT}/faculty/${id}`, {
     method: 'PUT',
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update faculty failed');
+  return body;
+}
+
+export async function deleteFaculty(id) {
+  const res = await fetch(`${API_ROOT}/faculty/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
   return readJson(res);
 }
 
-export async function deleteDepartment(id) {
-  const res = await fetch(`${API_ROOT}/departments/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+// Syllabus
+export async function fetchSyllabi() {
+  const res = await fetch(`${API_ROOT}/syllabus`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function createSyllabus(data) {
+  const res = await fetch(`${API_ROOT}/syllabus`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Create syllabus failed');
+  return body;
+}
+export async function updateSyllabus(id, data) {
+  const res = await fetch(`${API_ROOT}/syllabus/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update syllabus failed');
+  return body;
+}
+
+export async function deleteSyllabus(id) {
+  const res = await fetch(`${API_ROOT}/syllabus/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  return readJson(res);
+}
+
+// Courses (canonical course codes)
+export async function fetchCourses() {
+  const res = await fetch(`${API_ROOT}/courses`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function createCourse(data) {
+  const res = await fetch(`${API_ROOT}/courses`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Create course failed');
+  return body;
+}
+
+export async function updateCourse(id, data) {
+  const res = await fetch(`${API_ROOT}/courses/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update course failed');
+  return body;
+}
+
+export async function deleteCourse(id) {
+  const res = await fetch(`${API_ROOT}/courses/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  return readJson(res);
+}
+
+
+// Events
+export async function fetchEvents() {
+  const res = await fetch(`${API_ROOT}/events`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function createEvent(data) {
+  const res = await fetch(`${API_ROOT}/events`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Create event failed');
+  return body;
+}
+export async function updateEvent(id, data) {
+  const res = await fetch(`${API_ROOT}/events/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update event failed');
+  return body;
+}
+
+export async function deleteEvent(id) {
+  const res = await fetch(`${API_ROOT}/events/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  return readJson(res);
+}
+
+// Sections
+export async function fetchSections() {
+  const res = await fetch(`${API_ROOT}/sections`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function createSection(data) {
+  const res = await fetch(`${API_ROOT}/sections`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Create section failed');
+  return body;
+}
+export async function updateSection(id, data) {
+  const res = await fetch(`${API_ROOT}/sections/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update section failed');
+  return body;
+}
+
+export async function deleteSection(id) {
+  const res = await fetch(`${API_ROOT}/sections/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  return readJson(res);
+}
+
+// Schedules
+export async function fetchSchedules() {
+  const res = await fetch(`${API_ROOT}/schedules`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function createSchedule(data) {
+  const res = await fetch(`${API_ROOT}/schedules`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Create schedule failed');
+  return body;
+}
+export async function updateSchedule(id, data) {
+  const res = await fetch(`${API_ROOT}/schedules/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update schedule failed');
+  return body;
+}
+
+export async function deleteSchedule(id) {
+  const res = await fetch(`${API_ROOT}/schedules/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  return readJson(res);
+}
+
+// Reports
+export async function fetchReports() {
+  const res = await fetch(`${API_ROOT}/reports`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function createReport(data) {
+  const res = await fetch(`${API_ROOT}/reports`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Create report failed');
+  return body;
+}
+export async function updateReport(id, data) {
+  const res = await fetch(`${API_ROOT}/reports/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const body = await readJson(res);
+  if (!res.ok) throw new Error(body.error || 'Update report failed');
+  return body;
+}
+
+export async function deleteReport(id) {
+  const res = await fetch(`${API_ROOT}/reports/${id}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
   return readJson(res);
 }

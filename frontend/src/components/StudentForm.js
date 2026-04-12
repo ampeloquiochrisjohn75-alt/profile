@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { fetchDepartments } from '../api';
+import React, { useState, useEffect, useRef } from 'react';
+import { fetchDepartments, fetchSyllabi } from '../api';
 import './StudentForm.css';
 
 export default function StudentForm({ onSubmit, onCancel, initial = null, allowSkills = true, isRegistration = false }){
@@ -7,9 +7,17 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
   const [academic, setAcademic] = useState([]);
   const [violations, setViolations] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [syllabi, setSyllabi] = useState([]);
 
+  const prevInitialId = useRef(null);
   useEffect(() => {
     if (initial == null) return;
+    // Only initialize the form when the actual student ID changes to avoid
+    // resetting user input if the parent passes a new object instance with
+    // the same student data (causes blinking/focus loss while typing).
+    const iid = initial._id || initial.studentId || '';
+    if (prevInitialId.current === iid) return;
+    prevInitialId.current = iid;
     setForm({
       studentId: initial.studentId || '',
       firstName: initial.firstName || '',
@@ -33,15 +41,42 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
       try {
         const res = await fetchDepartments();
         if (!mounted) return;
-        setDepartments(res.data || []);
+        const deps = res.data || [];
+        // If creating a new student, default department to CCS when possible
+        if (!initial) {
+          const cc = deps.find(d => (d.code && String(d.code).toUpperCase() === 'CCS') || (d.name && String(d.name).toUpperCase() === 'CCS'));
+          if (cc) {
+            setDepartments(deps);
+            setForm(f => ({ ...f, department: cc._id }));
+          } else {
+            // Insert a synthetic CCS option so the select shows CCS even when not present server-side
+            const synthetic = { _id: 'CCS', name: 'CCS', code: 'CCS' };
+            setDepartments([synthetic, ...deps]);
+            setForm(f => ({ ...f, department: 'CCS' }));
+          }
+        } else {
+          setDepartments(deps);
+        }
       } catch (e) {
         console.warn('fetchDepartments failed', e.message);
       }
     })();
+    (async () => {
+      try {
+        const s = await fetchSyllabi();
+        if (!mounted) return;
+        setSyllabi((s && s.data) || []);
+      } catch (err) {
+        console.warn('fetchSyllabi failed', err.message);
+      }
+    })();
     return () => { mounted = false; };
-  }, []);
+  }, [initial]);
 
-  const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handle = (e) => {
+    const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+  };
 
   const addAcademic = () => setAcademic(a => [...a, { institution: '', degree: '', year: '', gpa: '', notes: '' }]);
   const updateAcademic = (idx, key, value) => setAcademic(a => a.map((it,i)=> i===idx ? { ...it, [key]: value } : it));
@@ -83,7 +118,7 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
     }
     
     const payload = {
-      studentId: form.studentId,
+      ...(initial && form.studentId ? { studentId: form.studentId } : {}),
       firstName: form.firstName,
       lastName: form.lastName,
       email: form.email,
@@ -125,21 +160,23 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
               <p className="student-form-section-hint">Required fields are marked with *</p>
             </div>
             <div className="student-form-grid student-form-grid--2">
-              <div className="form-group form-group--span2">
-                <label htmlFor="sf-studentId">Student ID *</label>
-                <input id="sf-studentId" type="text" name="studentId" value={form.studentId} onChange={handle} required autoFocus />
-              </div>
+              {initial ? (
+                <div className="form-group form-group--span2">
+                  <label htmlFor="sf-studentId">Student ID</label>
+                  <input id="sf-studentId" type="text" name="studentId" value={form.studentId} onChange={handle} readOnly />
+                </div>
+              ) : null}
               <div className="form-group">
                 <label htmlFor="sf-firstName">First name {(isRegistration || (!initial && !allowSkills)) ? '*' : ''}</label>
-                <input id="sf-firstName" type="text" name="firstName" value={form.firstName} onChange={handle} required={isRegistration || (!initial && !allowSkills)} />
+                <input id="sf-firstName" type="text" name="firstName" value={form.firstName} onChange={handle} required={isRegistration || (!initial && !allowSkills)} autoComplete="given-name" />
               </div>
               <div className="form-group">
                 <label htmlFor="sf-lastName">Last name {(isRegistration || (!initial && !allowSkills)) ? '*' : ''}</label>
-                <input id="sf-lastName" type="text" name="lastName" value={form.lastName} onChange={handle} required={isRegistration || (!initial && !allowSkills)} />
+                <input id="sf-lastName" type="text" name="lastName" value={form.lastName} onChange={handle} required={isRegistration || (!initial && !allowSkills)} autoComplete="family-name" />
               </div>
               <div className="form-group form-group--span2">
                 <label htmlFor="sf-email">Email {(isRegistration || (!initial && !allowSkills)) ? '*' : ''}</label>
-                <input id="sf-email" type="email" name="email" value={form.email} onChange={handle} required={isRegistration || (!initial && !allowSkills)} />
+                <input id="sf-email" type="email" name="email" value={form.email} onChange={handle} required={isRegistration || (!initial && !allowSkills)} autoComplete="email" />
               </div>
             </div>
 
@@ -167,13 +204,11 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
                 <label htmlFor="sf-course">Program</label>
                 <select id="sf-course" name="course" value={form.course} onChange={handle}>
                   <option value="">Select program</option>
-                  <option value="BS Information Technology">BS Information Technology</option>
-                  <option value="BS Computer Science">BS Computer Science</option>
-                  <option value="BS Education">BS Education</option>
-                  <option value="BS Business Administration">BS Business Administration</option>
-                  <option value="BS Engineering">BS Engineering</option>
-                  <option value="BA Arts">BA Arts</option>
+                  {syllabi.map(s => (
+                    <option key={s._id} value={s.title}>{s.title}{s.courseCode ? ` (${s.courseCode})` : ''}</option>
+                  ))}
                 </select>
+                <div style={{marginTop:6}}><a href="/syllabus">Manage programs</a></div>
               </div>
               <div className="form-group">
                 <label htmlFor="sf-department">Department</label>

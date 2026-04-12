@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export default function UsersPage({ onAddStudent }){
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ skill: '', activity: '', q: '' });
+  const [filters, setFilters] = useState({ skill: '', activity: '', q: '', courseCode: '' });
   const [pageInfo, setPageInfo] = useState({ page: 1, pages: 1, total: 0, limit: 10 });
 
   const load = useCallback(async (opts = {}) => {
@@ -18,6 +18,7 @@ export default function UsersPage({ onAddStudent }){
         skill: opts.skill !== undefined ? opts.skill : filters.skill,
         activity: opts.activity !== undefined ? opts.activity : filters.activity,
         q: opts.q !== undefined ? opts.q : filters.q,
+        courseCode: opts.courseCode !== undefined ? opts.courseCode : filters.courseCode,
       };
       const res = await fetchStudents(params);
       setStudents(res.data || []);
@@ -47,9 +48,9 @@ export default function UsersPage({ onAddStudent }){
     return () => window.removeEventListener('students:reload', onReload);
   }, []);
 
-  const applyFilters = async () => await load({ skill: filters.skill, activity: filters.activity, q: filters.q, page: 1 });
-  const clearFiltersAndReload = async () => { setFilters({ skill: '', activity: '', q: '' }); await load({ skill: '', activity: '', q: '', page: 1 }); };
-  const changePage = async (nextPage) => await load({ skill: filters.skill, activity: filters.activity, q: filters.q, page: nextPage });
+  const applyFilters = async () => await load({ skill: filters.skill, activity: filters.activity, q: filters.q, courseCode: filters.courseCode, page: 1 });
+  const clearFiltersAndReload = async () => { setFilters({ skill: '', activity: '', q: '', courseCode: '' }); await load({ skill: '', activity: '', q: '', courseCode: '', page: 1 }); };
+  const changePage = async (nextPage) => await load({ skill: filters.skill, activity: filters.activity, q: filters.q, courseCode: filters.courseCode, page: nextPage });
   const handleExport = async () => {
     const csv = await exportStudentsCSV(filters);
     if (!csv) { console.warn('Export failed'); return; }
@@ -78,7 +79,7 @@ export default function UsersPage({ onAddStudent }){
       pageInfo={pageInfo}
       changePage={changePage}
       onViewProfile={(id) => navigate(`/users/${id}`)}
-      onEditProfile={(id) => navigate(`/users/${id}`)}
+      onEditProfile={(id) => navigate(`/users/${id}`, { state: { edit: true } })}
       onDelete={async (id) => {
         if (!window.confirm('Delete this student? This cannot be undone.')) return;
         try {

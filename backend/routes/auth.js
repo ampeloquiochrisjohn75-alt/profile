@@ -18,7 +18,11 @@ router.post('/register', async (req, res) => {
   console.log('Register route hit');
   try {
     const { email, password, role, studentId, firstName, lastName, course } = req.body;
-    if (!email || !password || !role || !studentId) return res.status(400).json({ error: 'email, password, role and ID are required' });
+    // Disallow creating admin accounts via the public register endpoint.
+    if (role === 'admin') return res.status(403).json({ error: 'Admin creation is disabled' });
+    // Require email/password/role always; studentId (login ID) is required only for admin accounts
+    if (!email || !password || !role) return res.status(400).json({ error: 'email, password and role are required' });
+    if (role === 'admin' && !studentId) return res.status(400).json({ error: 'student/admin ID is required for admin accounts' });
 
     // For student registration, require admin auth if not the first user
     if (role === 'student') {
@@ -37,11 +41,13 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    // Check for existing email/studentId
+    // Check for existing email; if an ID was supplied, ensure it's unique
     const existingEmail = await User.findOne({ email });
     if (existingEmail) return res.status(400).json({ error: 'Email already registered' });
-    const existingStudentId = await User.findOne({ studentId });
-    if (existingStudentId) return res.status(400).json({ error: 'ID already registered' });
+    if (studentId) {
+      const existingStudentId = await User.findOne({ studentId });
+      if (existingStudentId) return res.status(400).json({ error: 'ID already registered' });
+    }
     const hash = await bcrypt.hash(password, 10);
     const user = new User({ email, passwordHash: hash, role, studentId, firstName: firstName || '', lastName: lastName || '', course: course || '' });
     await user.save();

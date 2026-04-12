@@ -36,10 +36,8 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const data = req.body;
     console.log('POST /api/students body:', data);
-    // basic validation
-    if (!data || !data.studentId) {
-      return res.status(400).json({ error: 'studentId is required' });
-    }
+    // basic validation: payload must exist; studentId will be auto-generated when missing
+    if (!data) return res.status(400).json({ error: 'payload required' });
 
     // If password is provided, hash it
     if (data.password) {
@@ -49,11 +47,13 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
       delete data.password;
     }
 
-    // Check for existing email/studentId
+    // Check for existing email; if caller provided studentId, ensure it's unique
     const existingEmail = await Student.findOne({ email: data.email });
     if (existingEmail) return res.status(400).json({ error: 'Email already registered' });
-    const existingStudentId = await Student.findOne({ studentId: data.studentId });
-    if (existingStudentId) return res.status(400).json({ error: 'Student ID already registered' });
+    if (data.studentId) {
+      const existingStudentId = await Student.findOne({ studentId: data.studentId });
+      if (existingStudentId) return res.status(400).json({ error: 'Student ID already registered' });
+    }
 
     // ensure arrays exist and normalize to arrays
     data.skills = Array.isArray(data.skills) ? data.skills : (data.skills ? [data.skills] : []);
@@ -106,8 +106,8 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
 // Admins see full list; authenticated students may request a limited peer search by `skill`.
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { skill, activity, affiliation, q, page = 1, limit = 20, department } = req.query;
-    console.log('GET /api/students query:', { skill, activity, affiliation, q, page, limit, department, user: req.user && req.user.email });
+    const { skill, activity, affiliation, q, page = 1, limit = 20, department, courseCode } = req.query;
+    console.log('GET /api/students query:', { skill, activity, affiliation, q, page, limit, department, courseCode, user: req.user && req.user.email });
 
     // Base filter applies to students only
     const baseFilter = { role: 'student' };
@@ -126,6 +126,11 @@ router.get('/', requireAuth, async (req, res) => {
     if (skill) filter['skills.name'] = { $in: [skill.toLowerCase()] };
     if (activity) filter.nonAcademicActivities = { $in: [activity.toLowerCase()] };
     if (affiliation) filter.affiliations = { $in: [affiliation.toLowerCase()] };
+    if (courseCode) {
+      // case-insensitive exact match for course code
+      const esc = String(courseCode).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+      filter.courseCode = new RegExp('^' + esc + '$', 'i');
+    }
     if (department) {
       const mongoose = require('mongoose');
       if (mongoose.Types.ObjectId.isValid(department)) {
@@ -159,19 +164,23 @@ router.get('/', requireAuth, async (req, res) => {
 // Export CSV for current filter
 router.get('/export', async (req, res) => {
   try {
-    const { skill, activity, affiliation, q } = req.query;
+    const { skill, activity, affiliation, q, courseCode } = req.query;
     const filter = {};
-    if (skill) filter.skills = { $in: [skill.toLowerCase()] };
+    if (skill) filter['skills.name'] = { $in: [skill.toLowerCase()] };
     if (activity) filter.nonAcademicActivities = { $in: [activity.toLowerCase()] };
     if (affiliation) filter.affiliations = { $in: [affiliation.toLowerCase()] };
+    if (courseCode) {
+      const esc = String(courseCode).replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+      filter.courseCode = new RegExp('^' + esc + '$', 'i');
+    }
     if (q) {
       const re = new RegExp(q, 'i');
       filter.$or = [{ firstName: re }, { lastName: re }, { studentId: re }, { email: re }];
     }
 
     const students = await Student.find(filter).sort({ createdAt: -1 }).populate('department');
-    const header = ['studentId','firstName','lastName','email','course','skills','activities','affiliations'];
-    const rows = students.map(s => ([s.studentId, s.firstName, s.lastName, s.email, s.course, (s.skills||[]).map(sk => typeof sk === 'string' ? sk : `${sk.name}:${sk.level}`).join('|'), (s.nonAcademicActivities||[]).join('|'), (s.affiliations||[]).join('|')] ))
+    const header = ['studentId','firstName','lastName','email','course','courseCode','skills','activities','affiliations'];
+    const rows = students.map(s => ([s.studentId, s.firstName, s.lastName, s.email, s.course, s.courseCode || '', (s.skills||[]).map(sk => typeof sk === 'string' ? sk : `${sk.name}:${sk.level}`).join('|'), (s.nonAcademicActivities||[]).join('|'), (s.affiliations||[]).join('|')] ))
       .map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
 
     const csv = [header.join(','), ...rows].join('\n');

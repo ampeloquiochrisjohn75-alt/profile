@@ -9,13 +9,19 @@ import StudentHome from './components/StudentHome';
 import AdminHome from './components/AdminHome';
 import Login from './components/Login';
 import Register from './components/Register';
-import AddAdmin from './components/AddAdmin';
 import AppSidebar from './components/AppSidebar';
 import { BrowserRouter, useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AdminList from './components/AdminList';
 import AdminAccount from './components/AdminAccount';
 import { useAccess } from './context/AccessContext';
+import Faculty from './components/Faculty';
+import Syllabus from './components/Syllabus';
+import Programs from './components/Programs';
+import Events from './components/Events';
+import Sections from './components/Sections';
+import Schedules from './components/Schedules';
+import Reports from './components/Reports';
 
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const StudentProfile = lazy(() => import('./components/StudentProfile'));
@@ -112,7 +118,7 @@ function App() {
   };
   const [authView, setAuthView] = useState('login'); // login | register
   const [selected, setSelected] = useState(null);
-  const [profileStartEditing, setProfileStartEditing] = useState(false);
+  const profileRequestSeq = React.useRef(0);
   const [user, setUser] = useState(() => {
     try {
       const raw = localStorage.getItem('user');
@@ -167,16 +173,20 @@ function App() {
     }
   };
 
-  const openProfile = async (id, edit = false) => {
+  // fetch a profile; if `suppressView` is true the function will not switch the global view
+  const openProfile = async (id, edit = false, suppressView = false) => {
+    const seq = ++profileRequestSeq.current;
     try {
       const s = await fetchStudent(id);
+      // ignore stale responses
+      if (profileRequestSeq.current !== seq) return;
       // don't update UI if user navigated away from this profile while the request was inflight
       const currentPath = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '';
       if (!currentPath.startsWith(`/users/${id}`)) return;
       setSelected(s);
-      setProfileStartEditing(edit);
-      setViewTracked('profile');
+      if (!suppressView) setViewTracked('profile');
     } catch (err) {
+      if (profileRequestSeq.current !== seq) return; // ignore stale errors
       console.error('openProfile failed', err);
       showMessage('Failed to load profile', 'error');
     }
@@ -321,25 +331,50 @@ function App() {
       case 'departments':
         setViewTracked('departments');
         break;
-      case 'departments-add':
-        setViewTracked('departments-add');
+      case 'faculty':
+        if (navigateRef.current) navigateRef.current('/faculty');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/faculty');
+        setViewTracked('faculty');
+        break;
+      case 'syllabus':
+        if (navigateRef.current) navigateRef.current('/syllabus');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/syllabus');
+        setViewTracked('syllabus');
+        break;
+      case 'programs':
+        if (navigateRef.current) navigateRef.current('/programs');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/programs');
+        setViewTracked('programs');
+        break;
+      case 'events':
+        if (navigateRef.current) navigateRef.current('/events');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/events');
+        setViewTracked('events');
+        break;
+      case 'sections':
+        if (navigateRef.current) navigateRef.current('/sections');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/sections');
+        setViewTracked('sections');
+        break;
+      case 'schedules':
+        if (navigateRef.current) navigateRef.current('/schedules');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/schedules');
+        setViewTracked('schedules');
+        break;
+      case 'reports':
+        if (navigateRef.current) navigateRef.current('/reports');
+        else if (typeof window !== 'undefined' && window.history) window.history.pushState({}, '', '/reports');
+        setViewTracked('reports');
         break;
       case 'admins-list':
         setViewTracked('admins-list');
         break;
-      case 'add-admin':
-        setViewTracked('add-admin');
-        break;
+      
       case 'account':
         setViewTracked('account');
         break;
       case 'profile':
         goProfile();
-        break;
-      case 'reports':
-        // attempt to navigate to /reports
-        if (navigateRef.current) navigateRef.current('/reports');
-        else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', '/reports');
         break;
       default:
         break;
@@ -396,21 +431,34 @@ function App() {
       } else if (p === '/users/add') {
         setViewTracked('add');
       } else if (p.startsWith('/users/')) {
-        // dynamic user id: fetch profile
-        const id = p.split('/')[2];
-        if (id) openProfile(id, false);
-        setViewTracked('profile');
-      } else if (p === '/reports') {
-        // protect reports
-        if (!access.isAdmin) {
-          navigate('/dashboard', { replace: true });
-        } else {
-          setViewTracked('reports');
+        // dynamic user id: support /users/:id (ignore /edit suffix)
+        const parts = p.split('/'); // ['', 'users', ':id', 'edit' (optional)]
+        const id = parts[2];
+        const isEdit = (location && location.state && location.state.edit);
+        if (id) {
+          // always open the profile view (do not enter edit mode from URL)
+          openProfile(id, !!isEdit);
+          setViewTracked('profile');
         }
-      } else if (p === '/departments' || p === '/departments/add') {
-        setViewTracked(p === '/departments/add' ? 'departments-add' : 'departments');
-      } else if (p === '/admins' || p === '/admins/add') {
-        setViewTracked(p === '/admins/add' ? 'add-admin' : 'admins-list');
+      
+      } else if (p === '/reports') {
+        setViewTracked('reports');
+      } else if (p === '/faculty') {
+        setViewTracked('faculty');
+      } else if (p === '/syllabus') {
+        setViewTracked('syllabus');
+      } else if (p === '/programs') {
+        setViewTracked('programs');
+      } else if (p === '/events') {
+        setViewTracked('events');
+      } else if (p === '/sections') {
+        setViewTracked('sections');
+      } else if (p === '/schedules') {
+        setViewTracked('schedules');
+      } else if (p === '/departments') {
+        setViewTracked('departments');
+      } else if (p === '/admins') {
+        setViewTracked('admins-list');
       } else if (p === '/account') {
         setViewTracked('account');
       }
@@ -451,17 +499,29 @@ function App() {
         case 'reports':
           navigate('/reports');
           break;
+        case 'faculty':
+          navigate('/faculty');
+          break;
+        case 'syllabus':
+            navigate('/syllabus');
+            break;
+          case 'programs':
+            navigate('/programs');
+            break;
+        case 'events':
+          navigate('/events');
+          break;
+        case 'sections':
+          navigate('/sections');
+          break;
+        case 'schedules':
+          navigate('/schedules');
+          break;
         case 'departments':
           navigate('/departments');
           break;
-        case 'departments-add':
-          navigate('/departments/add');
-          break;
         case 'admins-list':
           navigate('/admins');
-          break;
-        case 'add-admin':
-          navigate('/admins/add');
           break;
         case 'account':
           navigate('/account');
@@ -571,7 +631,7 @@ function App() {
 
             {view === 'home' && (
               access.isAdmin ? (
-                <AdminHome onOpenProfile={openProfileFromHome} onAddStudent={() => setViewTracked('add')} onOpenDepartments={() => setViewTracked('departments')} onAddAdmin={() => handleNavRouter('add-admin')} currentUser={user} />
+                <AdminHome onOpenProfile={openProfileFromHome} onAddStudent={() => setViewTracked('add')} onOpenDepartments={() => setViewTracked('departments')} currentUser={user} />
               ) : (
                 <StudentHome
                   onOpenProfile={openProfileFromHome}
@@ -601,16 +661,39 @@ function App() {
               )
             )}
 
-            {access.isAdmin && (view === 'departments' || view === 'departments-add') && (
+            {access.isAdmin && view === 'departments' && (
               <Departments
                 showMessage={showMessage}
-                mode={view === 'departments-add' ? 'add' : 'list'}
-                onGoAdd={() => handleNavRouter('departments-add')}
+                mode={'list'}
               />
             )}
 
-            {access.isAdmin && view === 'add-admin' && (
-              <AddAdmin onSuccess={() => handleNavRouter('admins-list')} onCancel={() => handleNavRouter('admins-list')} showMessage={showMessage} />
+            {access.isAdmin && view === 'faculty' && (
+              <Faculty showMessage={showMessage} />
+            )}
+
+            {view === 'programs' && (
+              <Programs showMessage={showMessage} />
+            )}
+
+            {view === 'syllabus' && (
+              <Syllabus showMessage={showMessage} />
+            )}
+
+            {view === 'events' && (
+              <Events showMessage={showMessage} />
+            )}
+
+            {view === 'sections' && (
+              <Sections showMessage={showMessage} />
+            )}
+
+            {view === 'schedules' && (
+              <Schedules showMessage={showMessage} />
+            )}
+
+            {view === 'reports' && (
+              <Reports showMessage={showMessage} />
             )}
 
             {view === 'add' && (
@@ -625,22 +708,32 @@ function App() {
             )}
 
             {view === 'profile' && selected && (
-              <Suspense fallback={<Spinner />}>
-                <StudentProfile
-                  student={selected}
-                  currentUser={user}
-                  initialEditing={profileStartEditing}
-                  onEditingChange={setProfileEditing}
-                  onBack={() => {
-                    setViewTracked(access.isAdmin ? 'list' : 'home');
-                    setSelected(null);
-                    if (navigateRef.current) navigateRef.current(access.isAdmin ? '/users' : '/dashboard');
-                    else if (typeof window !== 'undefined' && window.location) window.history.pushState({}, '', access.isAdmin ? '/users' : '/dashboard');
+              <div style={{ padding: '1rem' }}>
+                <StudentForm
+                  initial={selected}
+                  allowSkills={!access.isAdmin}
+                  onSubmit={async (payload) => {
+                    try {
+                      await updateStudent(selected._id, payload);
+                      // refresh list and navigate back to users list
+                      window.dispatchEvent(new Event('students:reload'));
+                      setSelected(null);
+                      setViewTracked('list');
+                      try { navigate('/users'); } catch (e) { if (typeof window !== 'undefined') window.history.pushState({}, '', '/users'); }
+                      showMessage('Student updated', 'success');
+                    } catch (err) {
+                      console.error('Edit save failed', err);
+                      showMessage('Failed to update student: ' + (err.message || ''), 'error');
+                      throw err;
+                    }
                   }}
-                  onUpdate={handleUpdate}
-                  onDelete={handleDelete}
+                  onCancel={() => {
+                    setSelected(null);
+                    setViewTracked('list');
+                    try { navigate('/users'); } catch (e) { if (typeof window !== 'undefined') window.history.pushState({}, '', '/users'); }
+                  }}
                 />
-              </Suspense>
+              </div>
             )}
 
             {access.isAdmin && view === 'account' && (
@@ -648,7 +741,7 @@ function App() {
             )}
 
             {access.isAdmin && view === 'admins-list' && (
-              <AdminList showMessage={showMessage} onGoAdd={() => handleNavRouter('add-admin')} />
+              <AdminList showMessage={showMessage} />
             )}
           </main>
             </div>
@@ -667,8 +760,15 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<AppInner />} />
           <Route path="/users" element={<AppInner />} />
+          <Route path="/users/:id/edit" element={<AppInner />} />
           <Route path="/users/:id" element={<AppInner />} />
           <Route path="/reports" element={<AppInner />} />
+          <Route path="/faculty" element={<AppInner />} />
+          <Route path="/syllabus" element={<AppInner />} />
+          <Route path="/programs" element={<AppInner />} />
+          <Route path="/events" element={<AppInner />} />
+          <Route path="/sections" element={<AppInner />} />
+          <Route path="/schedules" element={<AppInner />} />
           <Route path="*" element={<AppInner />} />
         </Routes>
       </AccessProvider>

@@ -13,35 +13,7 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
-// create (admin)
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const d = new Department({ name: req.body.name, code: req.body.code || '' });
-    await d.save();
-    res.json(d);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// update (admin)
-router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    const d = await Department.findByIdAndUpdate(req.params.id, { name: req.body.name, code: req.body.code || '' }, { new: true });
-    res.json(d);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// delete (admin)
-router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
-  try {
-    await Department.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+// Note: creation / update / deletion of departments has been disabled
+// to keep the app read-only for departments (views remain available).
 
 module.exports = router;

@@ -119,6 +119,11 @@ function AppSidebar({
           <nav className="app-sidebar-nav">
             {navBtn('home', 'Dashboard', pathname === '/' || pathname === '/dashboard')}
             {navBtn('profile', 'Profile', pathname === '/profile' || /^\/users\/[^/]+$/.test(pathname))}
+            {navBtn('syllabus', 'Syllabus', pathname === '/syllabus')}
+            {navBtn('events', 'Events', pathname === '/events')}
+            {navBtn('sections', 'Sections', pathname === '/sections')}
+            {navBtn('schedules', 'Schedules', pathname === '/schedules')}
+            {navBtn('reports', 'Reports', pathname === '/reports')}
           </nav>
         </aside>
       </>
@@ -184,6 +189,29 @@ function AppSidebar({
             <button
               type="button"
               className="app-sidebar-group-toggle"
+              onClick={() => toggle('academic')}
+              aria-expanded={groups.academic}
+            >
+              <span>Academic</span>
+              <Chevron open={groups.academic} />
+            </button>
+            {groups.academic && (
+              <div className="app-sidebar-sub">
+                {navBtn('faculty', 'Faculty', pathname === '/faculty')}
+                {navBtn('programs', 'Program', pathname === '/programs')}
+                {navBtn('syllabus', 'Syllabus', pathname === '/syllabus')}
+                {navBtn('events', 'Events', pathname === '/events')}
+                {navBtn('sections', 'Sections', pathname === '/sections')}
+                {navBtn('schedules', 'Schedules', pathname === '/schedules')}
+                {navBtn('reports', 'Reports', pathname === '/reports')}
+              </div>
+            )}
+          </div>
+
+          <div className="app-sidebar-group">
+            <button
+              type="button"
+              className="app-sidebar-group-toggle"
               onClick={() => toggle('departments')}
               aria-expanded={groups.departments}
             >
@@ -193,7 +221,6 @@ function AppSidebar({
             {groups.departments && (
               <div className="app-sidebar-sub">
                 {navBtn('departments', 'View departments', pathname === '/departments')}
-                {navBtn('departments-add', 'Add department', pathname === '/departments/add' || view === 'departments-add')}
               </div>
             )}
           </div>
@@ -211,7 +238,6 @@ function AppSidebar({
             {groups.admins && (
               <div className="app-sidebar-sub">
                 {navBtn('admins-list', 'View admins', pathname === '/admins')}
-                {navBtn('add-admin', 'Add admin', pathname === '/admins/add' || view === 'add-admin')}
               </div>
             )}
           </div>

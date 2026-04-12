@@ -5,16 +5,16 @@ import SkillLevelPicker from './SkillLevelPicker';
 import SkillIcon from './SkillIcon';
 import './StudentProfile.css';
 
-export default function StudentProfile({ student, currentUser, onBack, onUpdate, onDelete, initialEditing = false, onEditingChange }){
+export default function StudentProfile({ student, currentUser, onBack, onUpdate, onDelete, onEditingChange, initialEditing = false }){
   const [editing, setEditing] = useState(false);
   const access = useAccess();
+
+  // if parent requests that we start editing immediately, enable editor
   React.useEffect(() => {
     if (initialEditing) setEditing(true);
   }, [initialEditing]);
 
-  // keep parent informed when editing state changes
-
-  // Inform parent about editing state so it can avoid navigating away
+  // keep parent informed when editing state changes so navigation locks work
   React.useEffect(() => {
     if (typeof onEditingChange === 'function') onEditingChange(!!editing);
   }, [editing, onEditingChange]);
@@ -60,7 +60,7 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
           </h1>
           <p className="student-profile-lead">
             ID <strong>{student.studentId}</strong>
-            {student.course ? <> · {student.course}</> : null}
+            {student.course ? <> · {student.course}{student.courseCode ? ` (${student.courseCode})` : ''}</> : null}
           </p>
         </div>
         <div className="student-profile-hero-aside">
@@ -97,7 +97,7 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
             <div className="student-profile-rows">
               <div className="student-profile-row">
                 <span className="student-profile-label">Program</span>
-                <span className="student-profile-value">{student.course || '—'}</span>
+                <span className="student-profile-value">{student.course || '—'}{student.courseCode ? ` (${student.courseCode})` : ''}</span>
               </div>
               <div className="student-profile-row">
                 <span className="student-profile-label">Department</span>

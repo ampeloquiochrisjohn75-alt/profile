@@ -5,7 +5,6 @@ export default function Register({ onRegister, switchToLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
-  const [studentId, setStudentId] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [course, setCourse] = useState('');
@@ -15,7 +14,7 @@ export default function Register({ onRegister, switchToLogin }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await onRegister({ email, password, role, studentId, firstName, lastName, course });
+      await onRegister({ email, password, role, firstName, lastName, course });
     } catch (err) {
       alert(err.message || 'Register failed');
     } finally { setLoading(false); }
@@ -26,10 +25,10 @@ export default function Register({ onRegister, switchToLogin }) {
       <h3>Register</h3>
       <form onSubmit={submit}>
         <div>
-          <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
+          <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
         </div>
         <div>
-          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
         </div>
         <div>
           <select value={role} onChange={e => setRole(e.target.value)}>
@@ -37,16 +36,14 @@ export default function Register({ onRegister, switchToLogin }) {
             <option value="admin">Admin</option>
           </select>
         </div>
-        <div>
-          <input placeholder="Student ID (required)" value={studentId} onChange={e => setStudentId(e.target.value)} required />
-        </div>
+        {/* Student ID is assigned automatically; no input needed */}
         {role === 'student' && (
           <>
             <div>
-              <input placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+              <input placeholder="First name" value={firstName} onChange={e => setFirstName(e.target.value)} autoComplete="given-name" />
             </div>
             <div>
-              <input placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value)} />
+              <input placeholder="Last name" value={lastName} onChange={e => setLastName(e.target.value)} autoComplete="family-name" />
             </div>
             <div>
               <select value={course} onChange={e => setCourse(e.target.value)} required>

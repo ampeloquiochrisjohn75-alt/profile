@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchStudents } from '../api';
+import { fetchDepartments, fetchStudents } from '../api';
 import './Departments.css';
 
 function initials(firstName, lastName, studentId) {
@@ -13,8 +13,6 @@ function initials(firstName, lastName, studentId) {
 export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [name, setName] = useState('');
-  const [editing, setEditing] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [deptStudents, setDeptStudents] = useState({});
 
@@ -34,43 +32,7 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
     load();
   }, []);
 
-  const handleAdd = async () => {
-    if (!name.trim()) return;
-    try {
-      await createDepartment({ name: name.trim() });
-      setName('');
-      load();
-      (showMessage || ((m) => alert(m)))('Department added', 'success');
-    } catch (e) {
-      console.error(e);
-      (showMessage || ((m) => alert(m)))('Add failed: ' + e.message, 'error');
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!editing || !editing.name) return;
-    try {
-      await updateDepartment(editing._id, { name: editing.name });
-      setEditing(null);
-      load();
-      (showMessage || ((m) => alert(m)))('Department updated', 'success');
-    } catch (e) {
-      console.error(e);
-      (showMessage || ((m) => alert(m)))('Update failed: ' + e.message, 'error');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this department? Students may lose this assignment.')) return;
-    try {
-      await deleteDepartment(id);
-      load();
-      (showMessage || ((m) => alert(m)))('Department deleted', 'success');
-    } catch (e) {
-      console.error(e);
-      (showMessage || ((m) => alert(m)))('Delete failed: ' + e.message, 'error');
-    }
-  };
+  // create/update/delete actions are disabled — departments are read-only in this deployment.
 
   const toggleStudents = async (dept) => {
     const id = dept._id;
@@ -88,10 +50,10 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
     }
   };
 
-  const showAddBar = mode === 'add' || mode === 'manage';
-  const isListMode = mode === 'list';
-  const pageTitle = mode === 'add' ? 'Add department' : 'Departments';
-  const pageEyebrow = mode === 'add' ? 'Create' : 'Directory';
+  
+  const isListMode = true;
+  const pageTitle = 'Departments';
+  const pageEyebrow = 'Directory';
 
   if (loading) {
     return (
@@ -130,40 +92,11 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
             <span className="dept-stat-value">{list.length}</span>
             <span className="dept-stat-label">{list.length === 1 ? 'department' : 'departments'}</span>
           </div>
-          {isListMode && typeof onGoAdd === 'function' && (
-            <button type="button" className="dept-btn dept-btn--primary" onClick={onGoAdd}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add department
-            </button>
-          )}
+          {/* Add department action disabled (read-only view) */}
         </div>
       </header>
 
-      {showAddBar && (
-        <section className="dept-add-panel" aria-label="New department">
-          <div className="dept-add-inner">
-            <label className="dept-add-label" htmlFor="dept-new-name">
-              Department name
-            </label>
-            <div className="dept-add-row">
-              <input
-                id="dept-new-name"
-                className="dept-input"
-                placeholder="e.g. Computer Science"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              />
-              <button type="button" className="dept-btn dept-btn--primary" onClick={handleAdd} disabled={!name.trim()}>
-                Add department
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Add panel removed — departments are read-only */}
 
       <section className="dept-grid" aria-label="Department list">
         {list.length === 0 ? (
@@ -187,7 +120,7 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
           </div>
         ) : (
           list.map((d) => (
-            <article key={d._id} className={`dept-card${editing && editing._id === d._id ? ' dept-card--editing' : ''}`}>
+            <article key={d._id} className="dept-card">
               <div className="dept-card-main">
                 <div className="dept-card-icon" aria-hidden>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -196,48 +129,13 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
                   </svg>
                 </div>
                 <div className="dept-card-body">
-                  {editing && editing._id === d._id ? (
-                    <div className="dept-edit-row">
-                      <input
-                        className="dept-input dept-input--inline"
-                        value={editing.name}
-                        onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                        aria-label="Department name"
-                      />
-                      <div className="dept-edit-actions">
-                        <button type="button" className="dept-btn dept-btn--primary dept-btn--sm" onClick={handleUpdate}>
-                          Save
-                        </button>
-                        <button type="button" className="dept-btn dept-btn--ghost dept-btn--sm" onClick={() => setEditing(null)}>
-                          Cancel
-                        </button>
-                      </div>
+                    <div className="dept-card-headline">
+                      <h2 className="dept-card-name">{d.name}</h2>
+                      {d.code ? <span className="dept-code-chip">{d.code}</span> : null}
                     </div>
-                  ) : (
-                    <>
-                      <div className="dept-card-headline">
-                        <h2 className="dept-card-name">{d.name}</h2>
-                        {d.code ? <span className="dept-code-chip">{d.code}</span> : null}
-                      </div>
-                      <p className="dept-card-meta">Department record</p>
-                    </>
-                  )}
+                    <p className="dept-card-meta">Department record</p>
                 </div>
-                {!editing || editing._id !== d._id ? (
                   <div className="dept-card-actions">
-                    <button
-                      type="button"
-                      className="dept-action-btn"
-                      title="Edit"
-                      aria-label={`Edit ${d.name}`}
-                      onClick={() => setEditing({ ...d })}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                      </svg>
-                    </button>
-
                     <button
                       type="button"
                       className={`dept-action-btn${expanded[d._id] ? ' is-active' : ''}`}
@@ -250,23 +148,7 @@ export default function Departments({ showMessage, mode = 'list', onGoAdd }) {
                         <path d="M6 9l6 6 6-6" />
                       </svg>
                     </button>
-
-                    <button
-                      type="button"
-                      className="dept-action-btn dept-action-btn--danger"
-                      title="Delete"
-                      aria-label={`Delete ${d.name}`}
-                      onClick={() => handleDelete(d._id)}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                        <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
                   </div>
-                ) : null}
               </div>
 
               {expanded[d._id] && (

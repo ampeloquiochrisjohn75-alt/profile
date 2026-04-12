@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import SkillIcon from './SkillIcon';
 import './StudentList.css';
+import { fetchSyllabi } from '../api';
 
 function initials(firstName, lastName, studentId) {
   const a = (firstName && String(firstName).trim()[0]) || '';
@@ -25,9 +26,24 @@ export default function StudentList({
   onDelete,
   onAddStudent,
 }) {
-  const hasFilters = Boolean(filters.q || filters.skill || filters.activity);
+  const hasFilters = Boolean(filters.q || filters.skill || filters.activity || filters.courseCode);
   const empty = students.length === 0;
   const noMatches = empty && pageInfo.total === 0;
+
+  const [syllabi, setSyllabi] = useState([]);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetchSyllabi();
+        if (!mounted) return;
+        setSyllabi(res.data || []);
+      } catch (e) {
+        console.warn('fetchSyllabi failed', e && e.message ? e.message : e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="student-list-page">
@@ -81,6 +97,20 @@ export default function StudentList({
               onChange={(e) => setFilters((f) => ({ ...f, activity: e.target.value }))}
               onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
             />
+          </div>
+          <div className="student-list-field">
+            <label htmlFor="student-filter-courseCode">Course code</label>
+            <select
+              id="student-filter-courseCode"
+              className="student-list-input"
+              value={filters.courseCode || ''}
+              onChange={(e) => setFilters((f) => ({ ...f, courseCode: e.target.value }))}
+            >
+              <option value="">Any</option>
+              {syllabi.filter(s => s && s.courseCode).map(s => (
+                <option key={s._id || s.courseCode} value={s.courseCode}>{s.courseCode + (s.title ? ` — ${s.title}` : '')}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="student-list-filters-actions">
@@ -140,7 +170,7 @@ export default function StudentList({
                   </h2>
                   <div className="student-card-chips">
                     <span className="student-chip">ID {s.studentId}</span>
-                    {s.course ? <span className="student-chip">{s.course}</span> : <span className="student-chip student-chip--muted">No program</span>}
+                    {s.course ? <span className="student-chip">{s.course}{s.courseCode ? ` (${s.courseCode})` : ''}</span> : <span className="student-chip student-chip--muted">No program</span>}
                     {s.department && s.department.name ? (
                       <span className="student-chip student-chip--accent">{s.department.name}</span>
                     ) : null}
@@ -170,31 +200,22 @@ export default function StudentList({
               </div>
 
               <div className="student-card-actions">
-                <button
-                  type="button"
-                  className="student-action-btn"
-                  onClick={() => onViewProfile(s._id)}
-                  title="View profile"
-                  aria-label={`View profile ${s.firstName} ${s.lastName}`}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </button>
+                {onEditProfile && (
+                  <button
+                    type="button"
+                    className="student-action-btn"
+                    onClick={() => onEditProfile(s._id)}
+                    title="Edit"
+                    aria-label={`Edit ${s.firstName} ${s.lastName}`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                    </svg>
+                  </button>
+                )}
 
-                <button
-                  type="button"
-                  className="student-action-btn"
-                  onClick={() => onEditProfile(s._id)}
-                  title="Edit"
-                  aria-label={`Edit ${s.firstName} ${s.lastName}`}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                  </svg>
-                </button>
+                {/* Edit action removed */}
 
                 <button
                   type="button"

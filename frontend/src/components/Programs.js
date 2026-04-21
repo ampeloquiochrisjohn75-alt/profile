@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { fetchCourses, createCourse, updateCourse, deleteCourse, fetchStudents } from '../api';
 
 export default function Programs({ showMessage }) {
@@ -8,7 +8,7 @@ export default function Programs({ showMessage }) {
   const [newTitle, setNewTitle] = useState('');
   const [expanded, setExpanded] = useState({});
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetchCourses();
@@ -18,9 +18,9 @@ export default function Programs({ showMessage }) {
       (showMessage || alert)(err.message || 'Failed to load programs', 'error');
       setGroups([]);
     } finally { setLoading(false); }
-  };
+  }, [showMessage]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const submit = async (e) => {
     e.preventDefault();

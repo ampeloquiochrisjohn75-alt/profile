@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 import './App.css';
-import { createStudent, fetchStudent, updateStudent, deleteStudent, loginAuth, registerAuth } from './api';
+import { createStudent, fetchStudent, updateStudent, loginAuth, registerAuth } from './api';
 import Departments from './components/Departments';
 import { AccessProvider } from './context/AccessContext';
 import StudentForm from './components/StudentForm';
@@ -24,7 +24,6 @@ import Schedules from './components/Schedules';
 import Reports from './components/Reports';
 
 const UsersPage = lazy(() => import('./pages/UsersPage'));
-const StudentProfile = lazy(() => import('./components/StudentProfile'));
 
 function HeaderAccount({ user, userInitial, darkMode, setDarkMode, onProfile, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -107,9 +106,6 @@ function App() {
   const [view, setView] = useState('list'); // list | add | profile
   // Prevent navigating away from profile while editing
   const profileEditLockRef = useRef(false);
-  const setProfileEditing = useCallback((isEditing) => {
-    profileEditLockRef.current = !!isEditing;
-  }, []);
 
   const setViewTracked = (v) => {
     // while a profile edit lock is active, don't switch away from the profile view
@@ -125,7 +121,7 @@ function App() {
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   });
-  const [homeRefreshKey, setHomeRefreshKey] = useState(0);
+  const [homeRefreshKey] = useState(0);
   const [flash, setFlash] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
@@ -197,35 +193,7 @@ function App() {
     openProfile(id, edit);
   };
 
-  const handleUpdate = async (id, data) => {
-    try {
-      const updated = await updateStudent(id, data);
-      // update selected profile immediately
-      setSelected(updated);
-      // signal list to reload if needed
-      if (user && user.role === 'admin') window.dispatchEvent(new Event('students:reload'));
-      setViewTracked('profile');
-      // if student updated their own profile, refresh student home stats
-      if (user && user.role === 'student') setHomeRefreshKey(k => k + 1);
-      showMessage('Student updated', 'success');
-    } catch (err) {
-      console.error(err);
-      showMessage('Failed to update student: ' + (err.message || ''), 'error');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteStudent(id);
-      window.dispatchEvent(new Event('students:reload'));
-      setViewTracked('list');
-      setSelected(null);
-      showMessage('Student deleted', 'success');
-    } catch (err) {
-      console.error(err);
-      showMessage('Failed to delete student: ' + (err.message || ''), 'error');
-    }
-  };
+  
   
 
   const handleLogin = async ({ studentId, password }) => {
@@ -462,7 +430,7 @@ function App() {
       } else if (p === '/account') {
         setViewTracked('account');
       }
-    }, [location.pathname, navigate, access.isAdmin]);
+    }, [location, navigate, access.isAdmin]);
 
     const handleNavRouter = useCallback(async (key) => {
       // keep legacy AppSidebar API but use router navigation where applicable

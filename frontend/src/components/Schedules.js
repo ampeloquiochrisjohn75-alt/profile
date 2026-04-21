@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { fetchEvents, createEvent, updateEvent, deleteEvent, fetchDepartments, fetchCourses } from '../api';
 
 function formatKey(d) {
@@ -48,7 +48,7 @@ export default function Schedules({ showMessage }) {
   }, []);
   const isAdmin = user && user.role === 'admin';
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetchEvents();
@@ -61,9 +61,9 @@ export default function Schedules({ showMessage }) {
       (showMessage || alert)(err.message || 'Failed to load events', 'error');
       setEvents([]);
     } finally { setLoading(false); }
-  };
+  }, [showMessage]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   // fetch departments and programs for admin selectors
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function Schedules({ showMessage }) {
   const eventsByDay = useMemo(() => {
     const map = Object.create(null);
     for (const e of events) {
-      const s = e.start || e.createdAt && new Date(e.createdAt) || null;
+      const s = e.start || (e.createdAt ? new Date(e.createdAt) : null);
       const t = e.end || s;
       if (!s) continue;
       let cur = new Date(s.getFullYear(), s.getMonth(), s.getDate());

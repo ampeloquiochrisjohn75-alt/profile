@@ -1,25 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import './AppSidebar.css';
-
-function Chevron({ open }) {
-  return (
-    <svg
-      className={`app-sidebar-chevron${open ? ' is-open' : ''}`}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M9 18l6-6-6-6" />
-    </svg>
-  );
-}
 
 function AppSidebar({
   role,
@@ -32,27 +13,9 @@ function AppSidebar({
   darkMode,
   onToggleDark,
 }) {
-  const [groups, setGroups] = useState({
-    students: true,
-    departments: true,
-    admins: true,
-  });
-
   const location = useLocation();
   const pathname = location && location.pathname ? location.pathname : '';
 
-  useEffect(() => {
-    setGroups((o) => ({
-      ...o,
-      students: o.students || pathname === '/users' || pathname.startsWith('/users/'),
-      departments: o.departments || pathname.startsWith('/departments'),
-      admins: o.admins || pathname.startsWith('/admins'),
-    }));
-  }, [pathname]);
-
-  const toggle = (key) => {
-    setGroups((o) => ({ ...o, [key]: !o[key] }));
-  };
 
   const fire = (key) => {
     onNav(key);
@@ -167,79 +130,39 @@ function AppSidebar({
         <nav className="app-sidebar-nav">
           {navBtn('home', 'Dashboard', pathname === '/' || pathname === '/dashboard')}
 
-          <div className="app-sidebar-group">
-            <button
-              type="button"
-              className="app-sidebar-group-toggle"
-              onClick={() => toggle('students')}
-              aria-expanded={groups.students}
-            >
-              <span>Students</span>
-              <Chevron open={groups.students} />
-            </button>
-            {groups.students && (
-              <div className="app-sidebar-sub">
-                {navBtn('list', 'View students', pathname === '/users')}
-                {navBtn('add', 'Add student', pathname === '/users/add' || view === 'add')}
-              </div>
-            )}
+          <div className="app-sidebar-section">
+            <div className="app-sidebar-section-title">Students</div>
+            <div className="app-sidebar-sub">
+              {navBtn('list', 'View students', pathname === '/users')}
+              {navBtn('add', 'Add student', pathname === '/users/add' || view === 'add')}
+            </div>
           </div>
 
-          <div className="app-sidebar-group">
-            <button
-              type="button"
-              className="app-sidebar-group-toggle"
-              onClick={() => toggle('academic')}
-              aria-expanded={groups.academic}
-            >
-              <span>Academic</span>
-              <Chevron open={groups.academic} />
-            </button>
-            {groups.academic && (
-              <div className="app-sidebar-sub">
-                {navBtn('faculty', 'Faculty', pathname === '/faculty')}
-                {navBtn('programs', 'Program', pathname === '/programs')}
-                {navBtn('syllabus', 'Syllabus', pathname === '/syllabus')}
-                {navBtn('events', 'Events', pathname === '/events')}
-                {navBtn('sections', 'Sections', pathname === '/sections')}
-                {navBtn('schedules', 'Schedules', pathname === '/schedules')}
-                {navBtn('reports', 'Reports', pathname === '/reports')}
-              </div>
-            )}
+          <div className="app-sidebar-section">
+            <div className="app-sidebar-section-title">Academic</div>
+            <div className="app-sidebar-sub">
+              {navBtn('faculty', 'Faculty', pathname === '/faculty')}
+              {navBtn('programs', 'Program', pathname === '/programs')}
+              {navBtn('syllabus', 'Syllabus', pathname === '/syllabus')}
+              {navBtn('events', 'Events', pathname === '/events')}
+              {navBtn('sections', 'Sections', pathname === '/sections')}
+              {navBtn('schedules', 'Schedules', pathname === '/schedules')}
+              {navBtn('reports', 'Reports', pathname === '/reports')}
+            </div>
           </div>
 
-          <div className="app-sidebar-group">
-            <button
-              type="button"
-              className="app-sidebar-group-toggle"
-              onClick={() => toggle('departments')}
-              aria-expanded={groups.departments}
-            >
-              <span>Departments</span>
-              <Chevron open={groups.departments} />
-            </button>
-            {groups.departments && (
-              <div className="app-sidebar-sub">
-                {navBtn('departments', 'View departments', pathname === '/departments')}
-              </div>
-            )}
+          <div className="app-sidebar-section">
+            <div className="app-sidebar-section-title">Departments</div>
+            <div className="app-sidebar-sub">
+              {navBtn('departments', 'View departments', pathname === '/departments')}
+            </div>
           </div>
 
-          <div className="app-sidebar-group">
-            <button
-              type="button"
-              className="app-sidebar-group-toggle"
-              onClick={() => toggle('admins')}
-              aria-expanded={groups.admins}
-            >
-              <span>Admins</span>
-              <Chevron open={groups.admins} />
-            </button>
-            {groups.admins && (
-              <div className="app-sidebar-sub">
-                {navBtn('admins-list', 'View admins', pathname === '/admins')}
-              </div>
-            )}
+          <div className="app-sidebar-section">
+            <div className="app-sidebar-section-title">Admins</div>
+            <div className="app-sidebar-sub">
+              {navBtn('admins-list', 'View admins', pathname === '/admins')}
+            </div>
           </div>
 
           {/* Profile moved to header account menu */}

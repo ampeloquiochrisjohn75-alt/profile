@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { fetchReports, createReport, updateReport, deleteReport, fetchStudents, fetchFaculty } from '../api';
+import './AdminList.css';
+import './Reports.css';
 
 export default function Reports({ showMessage }) {
   const [rows, setRows] = useState([]);
@@ -8,6 +10,85 @@ export default function Reports({ showMessage }) {
   const [editingId, setEditingId] = useState(null);
   const [studentsList, setStudentsList] = useState([]);
   const [facultyList, setFacultyList] = useState([]);
+  const [studentQuery, setStudentQuery] = useState('');
+  const [studentOpen, setStudentOpen] = useState(false);
+  const [facultyQuery, setFacultyQuery] = useState('');
+  const [facultyOpen, setFacultyOpen] = useState(false);
+  const studentRef = useRef(null);
+  const facultyRef = useRef(null);
+
+  const filteredStudents = useMemo(() => {
+    const q = (studentQuery || '').trim().toLowerCase();
+    if (!q) return studentsList || [];
+    return (studentsList || []).filter(s => {
+      const label = `${s.studentId || ''} ${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+      return label.includes(q);
+    });
+  }, [studentsList, studentQuery]);
+
+  const filteredFaculty = useMemo(() => {
+    const q = (facultyQuery || '').trim().toLowerCase();
+    if (!q) return facultyList || [];
+    return (facultyList || []).filter(f => {
+      const label = `${f.employeeId || ''} ${f.firstName || ''} ${f.lastName || ''}`.toLowerCase();
+      return label.includes(q);
+    });
+  }, [facultyList, facultyQuery]);
+
+  const toggleStudentRecipient = useCallback((id) => {
+    setForm(f => {
+      const arr = Array.isArray(f.studentRecipients) ? [...f.studentRecipients] : [];
+      const idx = arr.findIndex(x => String(x) === String(id));
+      if (idx >= 0) arr.splice(idx, 1);
+      else arr.push(String(id));
+      return { ...f, studentRecipients: arr };
+    });
+  }, []);
+
+  const removeStudentRecipient = useCallback((id) => {
+    setForm(f => ({ ...f, studentRecipients: (Array.isArray(f.studentRecipients) ? f.studentRecipients.filter(x => String(x) !== String(id)) : []) }));
+  }, []);
+
+  const toggleFacultyRecipient = useCallback((id) => {
+    setForm(f => {
+      const arr = Array.isArray(f.facultyRecipients) ? [...f.facultyRecipients] : [];
+      const idx = arr.findIndex(x => String(x) === String(id));
+      if (idx >= 0) arr.splice(idx, 1);
+      else arr.push(String(id));
+      return { ...f, facultyRecipients: arr };
+    });
+  }, []);
+
+  const removeFacultyRecipient = useCallback((id) => {
+    setForm(f => ({ ...f, facultyRecipients: (Array.isArray(f.facultyRecipients) ? f.facultyRecipients.filter(x => String(x) !== String(id)) : []) }));
+  }, []);
+
+  // Close dropdowns when clicking outside or pressing Escape
+  useEffect(() => {
+    function handleDocClick(e) {
+      const t = e.target;
+      if (studentOpen && studentRef.current && !studentRef.current.contains(t)) {
+        setStudentOpen(false);
+      }
+      if (facultyOpen && facultyRef.current && !facultyRef.current.contains(t)) {
+        setFacultyOpen(false);
+      }
+    }
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        if (studentOpen) setStudentOpen(false);
+        if (facultyOpen) setFacultyOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleDocClick);
+    document.addEventListener('touchstart', handleDocClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleDocClick);
+      document.removeEventListener('touchstart', handleDocClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [studentOpen, facultyOpen]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -110,78 +191,139 @@ export default function Reports({ showMessage }) {
       </header>
 
       <section className="admins-panel">
-        <div style={{padding:12}}>
-          <form onSubmit={submit} style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <input placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
-            <select value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
+        <div className="admins-panel-inner">
+          <form onSubmit={submit} className="reports-form">
+            <input className="reports-input" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
+            <select className="reports-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
               <option value="admin">Admin</option>
               <option value="student">Student</option>
               <option value="all">All</option>
             </select>
-            <textarea placeholder="Long report text" value={form.data} onChange={e=>setForm({...form,data:e.target.value})} style={{minWidth:360,minHeight:80}} />
+            <textarea className="reports-textarea" placeholder="Long report text" value={form.data} onChange={e=>setForm({...form,data:e.target.value})} />
 
-            <label style={{display:'flex',alignItems:'center',gap:8}}>
+            <label className="reports-checkbox">
               <input type="checkbox" checked={!!form.allStudents} onChange={e=>setForm(f=>({...f,allStudents:e.target.checked}))} />
-              Send to all students
+              <span>Send to all students</span>
             </label>
-            <label style={{display:'flex',alignItems:'center',gap:8}}>
+            <label className="reports-checkbox">
               <input type="checkbox" checked={!!form.allFaculty} onChange={e=>setForm(f=>({...f,allFaculty:e.target.checked}))} />
-              Send to all faculty
+              <span>Send to all faculty</span>
             </label>
 
-            <div style={{display:'flex',gap:8,alignItems:'center',width:'100%'}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:12}}>Specific students (Ctrl/Cmd to multi-select)</div>
-                <select multiple value={form.studentRecipients} onChange={e=>{
-                  const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
-                  setForm(f=>({...f,studentRecipients:vals}));
-                }} style={{minHeight:120,width:'100%'}}>
-                  {studentsList.map(s => (
-                    <option key={s._id} value={s._id}>{s.studentId || s._id} — {s.firstName || ''} {s.lastName || ''}</option>
-                  ))}
-                </select>
+            <div className="reports-recipients">
+              <div className="reports-recipients-col">
+                <div className="reports-field-label">Specific students</div>
+                <div className="reports-multi" ref={studentRef}>
+                  <div className="reports-multi-input" onClick={() => setStudentOpen(true)}>
+                    {Array.isArray(form.studentRecipients) && form.studentRecipients.length > 0 ? (
+                      form.studentRecipients.map(id => {
+                        const s = (studentsList || []).find(x => String(x._id) === String(id));
+                        const label = s ? (s.studentId ? `${s.studentId} — ${s.firstName || ''} ${s.lastName || ''}` : s._id) : id;
+                        return (
+                          <span key={id} className="token">
+                            {label}
+                            <button type="button" className="token-remove" onClick={(e) => { e.stopPropagation(); removeStudentRecipient(String(id)); }}>×</button>
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="reports-placeholder">No students</span>
+                    )}
+                    <input className="reports-multi-search" value={studentQuery} onChange={e=>setStudentQuery(e.target.value)} onFocus={()=>setStudentOpen(true)} placeholder="Search students…" />
+                  </div>
+                  {studentOpen && (
+                    <div className="reports-dropdown">
+                      {filteredStudents.length === 0 ? <div className="reports-dropdown-empty">No matches</div> : (
+                        filteredStudents.slice(0,200).map(s => (
+                          <label key={s._id} className="dropdown-item">
+                            <input type="checkbox" checked={Array.isArray(form.studentRecipients) && form.studentRecipients.includes(String(s._id))} onChange={() => toggleStudentRecipient(String(s._id))} />
+                            <span className="dropdown-item-label">{s.studentId ? `${s.studentId} — ` : ''}{(s.firstName || '') + (s.lastName ? ' ' + s.lastName : '')}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div style={{width:16}} />
-              <div style={{flex:1}}>
-                <div style={{fontSize:12}}>Specific faculty (Ctrl/Cmd to multi-select)</div>
-                <select multiple value={form.facultyRecipients} onChange={e=>{
-                  const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
-                  setForm(f=>({...f,facultyRecipients:vals}));
-                }} style={{minHeight:120,width:'100%'}}>
-                  {facultyList.map(fa => (
-                    <option key={fa._id} value={fa._id}>{fa.employeeId || fa._id} — {fa.firstName || ''} {fa.lastName || ''}</option>
-                  ))}
-                </select>
+              <div className="reports-spacer" />
+              <div className="reports-recipients-col">
+                <div className="reports-field-label">Specific faculty</div>
+                <div className="reports-multi" ref={facultyRef}>
+                  <div className="reports-multi-input" onClick={() => setFacultyOpen(true)}>
+                    {Array.isArray(form.facultyRecipients) && form.facultyRecipients.length > 0 ? (
+                      form.facultyRecipients.map(id => {
+                        const f = (facultyList || []).find(x => String(x._id) === String(id));
+                        const label = f ? (f.employeeId ? `${f.employeeId} — ${f.firstName || ''} ${f.lastName || ''}` : f._id) : id;
+                        return (
+                          <span key={id} className="token">
+                            {label}
+                            <button type="button" className="token-remove" onClick={(e) => { e.stopPropagation(); removeFacultyRecipient(String(id)); }}>×</button>
+                          </span>
+                        );
+                      })
+                    ) : (
+                      <span className="reports-placeholder">No faculty</span>
+                    )}
+                    <input className="reports-multi-search" value={facultyQuery} onChange={e=>setFacultyQuery(e.target.value)} onFocus={()=>setFacultyOpen(true)} placeholder="Search faculty…" />
+                  </div>
+                  {facultyOpen && (
+                    <div className="reports-dropdown">
+                      {filteredFaculty.length === 0 ? <div className="reports-dropdown-empty">No matches</div> : (
+                        filteredFaculty.slice(0,200).map(f => (
+                          <label key={f._id} className="dropdown-item">
+                            <input type="checkbox" checked={Array.isArray(form.facultyRecipients) && form.facultyRecipients.includes(String(f._id))} onChange={() => toggleFacultyRecipient(String(f._id))} />
+                            <span className="dropdown-item-label">{f.employeeId ? `${f.employeeId} — ` : ''}{(f.firstName || '') + (f.lastName ? ' ' + f.lastName : '')}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div style={{display:'flex',gap:8}}>
-              <button type="submit">{editingId ? 'Update' : 'Create'}</button>
-              <button type="button" onClick={cancelEdit}>Clear</button>
+            <div className="reports-actions">
+              <button type="submit" className="admins-btn admins-btn--primary">{editingId ? 'Update' : 'Create'}</button>
+              <button type="button" className="admins-btn" onClick={cancelEdit}>Clear</button>
             </div>
           </form>
         </div>
 
-        <div>
-          {loading ? <div>Loading…</div> : (
-            <div>
-              {rows.map(r => (
-                <article key={r._id} style={{padding:12,borderBottom:'1px solid #eee'}}>
-                  {editingId === r._id ? (
-                    <div style={{padding:8}}>Editing…</div>
-                  ) : (
-                    <>
-                      <h3>{r.title} <small>Targets: {r.allStudents ? 'All students' : (r.studentRecipients && r.studentRecipients.length ? `Students (${r.studentRecipients.length})` : '')} {r.allFaculty ? ' • All faculty' : (r.facultyRecipients && r.facultyRecipients.length ? ` • Faculty (${r.facultyRecipients.length})` : '')}</small></h3>
-                      <pre style={{whiteSpace:'pre-wrap'}}>{r.data || ''}</pre>
-                      <div style={{marginTop:8}}>
-                        <button type="button" onClick={()=>startEdit(r)}>Edit</button>
-                        <button type="button" style={{marginLeft:8}} onClick={()=>handleDelete(r._id)}>Delete</button>
-                      </div>
-                    </>
-                  )}
-                </article>
-              ))}
-            </div>
+        <div className="reports-list-wrap">
+          {loading ? <div className="muted">Loading…</div> : (
+            rows.length === 0 ? (
+              <div className="admins-empty">
+                <div className="admins-empty-icon" aria-hidden>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M3 7h18M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7" />
+                    <path d="M8 7V5a4 4 0 0 1 8 0v2" />
+                  </svg>
+                </div>
+                <h2 className="admins-empty-title">No reports</h2>
+                <p className="admins-empty-text">No reports found. Create one using the form above.</p>
+              </div>
+            ) : (
+              <div className="reports-list">
+                {rows.map(r => (
+                  <article key={r._id} className="report-card">
+                    {editingId === r._id ? (
+                      <div className="report-editing">Editing…</div>
+                    ) : (
+                      <>
+                        <div className="report-card-main">
+                          <h3 className="report-card-title">{r.title} <small>Targets: {r.allStudents ? 'All students' : (r.studentRecipients && r.studentRecipients.length ? `Students (${r.studentRecipients.length})` : '')} {r.allFaculty ? ' • All faculty' : (r.facultyRecipients && r.facultyRecipients.length ? ` • Faculty (${r.facultyRecipients.length})` : '')}</small></h3>
+                          <pre className="report-card-pre">{r.data || ''}</pre>
+                          <div className="report-card-actions">
+                            <button type="button" className="admins-btn" onClick={()=>startEdit(r)}>Edit</button>
+                            <button type="button" className="admins-btn" onClick={()=>handleDelete(r._id)}>Delete</button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )
           )}
         </div>
       </section>

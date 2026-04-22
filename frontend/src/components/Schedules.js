@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { fetchEvents, createEvent, updateEvent, deleteEvent, fetchDepartments, fetchCourses } from '../api';
+import './AdminList.css';
+import './Schedules.css';
 
 function formatKey(d) {
   if (!d) return '';
@@ -165,35 +167,44 @@ export default function Schedules({ showMessage }) {
           <h1 className="admins-title">Calendar</h1>
           <p className="admins-lead">View and mark important dates. Admins can add events and choose audience (students/faculty/all).</p>
         </div>
+        <div className="admins-hero-aside">
+          <div className="admins-stat-pill" role="status">
+            <span className="admins-stat-value">{events.length}</span>
+            <span className="admins-stat-label">events</span>
+          </div>
+          <button type="button" className="admins-btn" onClick={() => load()}>Refresh</button>
+        </div>
       </header>
 
-      <section className="admins-panel" style={{display:'flex',gap:16,alignItems:'flex-start'}}>
-        <div style={{width:680}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-            <div>
-              <button type="button" onClick={prevMonth}>&lt;</button>
-              <button type="button" onClick={nextMonth} style={{marginLeft:8}}>&gt;</button>
+      <section className="admins-panel schedules-panel">
+        <div className="schedules-left">
+          <div className="calendar-header">
+            <div className="calendar-nav">
+              <button type="button" className="admins-btn" onClick={prevMonth}>&lt;</button>
+              <button type="button" className="admins-btn" onClick={nextMonth}>&gt;</button>
             </div>
-            <div style={{fontWeight:700}}>{monthStart.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
-            <div />
+            <div className="calendar-title">{monthStart.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
+            <div className="calendar-actions" />
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4}}>
+
+          <div className="calendar-grid">
             {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=> (
-              <div key={d} style={{textAlign:'center',fontWeight:700}}>{d}</div>
+              <div key={d} className="calendar-weekday">{d}</div>
             ))}
-            {weeks.map((week,i) => week.map((day) => {
+            {weeks.map((week) => week.map((day) => {
               const k = formatKey(day);
               const ev = eventsByDay[k] || [];
               const isThisMonth = day.getMonth() === monthStart.getMonth();
+              const selected = selectedDate === k;
               return (
-                <button key={k} onClick={() => onSelectDay(day)} style={{minHeight:80, padding:8, textAlign:'left', border: '1px solid #eee', background: isThisMonth ? '#fff' : '#fafafa'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <div style={{fontSize:12}}>{day.getDate()}</div>
-                    <div style={{fontSize:11,color:'#666'}}>{ev.length ? `${ev.length}` : ''}</div>
+                <button key={k} className={`calendar-day ${isThisMonth ? '' : 'calendar-day--other'} ${selected ? 'calendar-day--selected' : ''} ${ev.length ? 'calendar-day--has-events' : ''}`} onClick={() => onSelectDay(day)}>
+                  <div className="calendar-day-top">
+                    <div className="calendar-day-num">{day.getDate()}</div>
+                    <div className="calendar-day-count">{ev.length ? `${ev.length}` : ''}</div>
                   </div>
-                  <div style={{marginTop:6,fontSize:12}}>
+                  <div className="calendar-day-events">
                     {ev.slice(0,3).map(e => (
-                      <div key={e._id} style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{e.title}</div>
+                      <div key={e._id} className="calendar-day-event">{e.title}</div>
                     ))}
                   </div>
                 </button>
@@ -202,86 +213,92 @@ export default function Schedules({ showMessage }) {
           </div>
         </div>
 
-        <aside style={{width:360}}>
-          <div style={{padding:12,border:'1px solid #eee',borderRadius:6}}>
-            <h3 style={{marginTop:0}}>Events on {selectedDate || '—'}</h3>
-            {loading ? <div>Loading…</div> : (
+        <aside className="schedules-aside">
+          <div className="events-panel">
+            <h3 className="events-panel-title">Events on {selectedDate || '—'}</h3>
+            {loading ? <div className="muted">Loading…</div> : (
               <div>
                 {(selectedDate && (eventsByDay[selectedDate] || []).length) ? (
                   (eventsByDay[selectedDate] || []).map(ev => (
-                    <article key={ev._id} style={{padding:8,borderBottom:'1px solid #f0f0f0'}}>
-                      <div style={{fontWeight:700}}>{ev.title}</div>
-                      <div style={{fontSize:12,color:'#666'}}>{ev.start ? new Date(ev.start).toLocaleString() : ''} {ev.end ? `— ${new Date(ev.end).toLocaleString()}` : ''}</div>
-                      <div style={{fontSize:13,marginTop:4}}>{ev.location || ''} • {ev.visibility}</div>
-                      {ev.departments && ev.departments.length ? (
-                        <div style={{fontSize:12,color:'#444',marginTop:6}}>Departments: {ev.departments.map(d => (d && (d.name || d.code)) || d).join(', ')}</div>
-                      ) : null}
-                      {ev.programs && ev.programs.length ? (
-                        <div style={{fontSize:12,color:'#444',marginTop:4}}>Programs: {ev.programs.join(', ')}</div>
-                      ) : null}
-                      {isAdmin && (
-                        <div style={{marginTop:8}}>
-                          <button type="button" onClick={() => {
-                            setEditingId(ev._id);
-                            setForm({
-                              title: ev.title,
-                              description: ev.description || '',
-                              start: ev.start ? new Date(ev.start).toISOString().slice(0,16) : '',
-                              end: ev.end ? new Date(ev.end).toISOString().slice(0,16) : '',
-                              location: ev.location || '',
-                              visibility: ev.visibility || 'all',
-                              departments: ev.departments ? ev.departments.map(d => (d && d._id ? d._id.toString() : d)) : [],
-                              programs: ev.programs || [],
-                            });
-                          }}>Edit</button>
-                          <button type="button" style={{marginLeft:8}} onClick={() => handleDelete(ev._id)}>Delete</button>
-                        </div>
-                      )}
+                    <article key={ev._id} className="event-card">
+                      <div className="event-card-main">
+                        <div className="event-card-title">{ev.title}</div>
+                        <div className="event-card-meta">{ev.start ? new Date(ev.start).toLocaleString() : ''} {ev.end ? `— ${new Date(ev.end).toLocaleString()}` : ''}</div>
+                        <div className="event-card-sub">{ev.location || ''} • {ev.visibility}</div>
+                        {ev.departments && ev.departments.length ? (
+                          <div className="event-card-list">Departments: {ev.departments.map(d => (d && (d.name || d.code)) || d).join(', ')}</div>
+                        ) : null}
+                        {ev.programs && ev.programs.length ? (
+                          <div className="event-card-list">Programs: {ev.programs.join(', ')}</div>
+                        ) : null}
+                      </div>
+                      <div className="event-card-actions">
+                        {isAdmin && (
+                          <>
+                            <button type="button" className="admins-btn" onClick={() => {
+                              setEditingId(ev._id);
+                              setForm({
+                                title: ev.title,
+                                description: ev.description || '',
+                                start: ev.start ? new Date(ev.start).toISOString().slice(0,16) : '',
+                                end: ev.end ? new Date(ev.end).toISOString().slice(0,16) : '',
+                                location: ev.location || '',
+                                visibility: ev.visibility || 'all',
+                                departments: ev.departments ? ev.departments.map(d => (d && d._id ? d._id.toString() : d)) : [],
+                                programs: ev.programs || [],
+                              });
+                            }}>Edit</button>
+                            <button type="button" className="admins-btn" onClick={() => handleDelete(ev._id)}>Delete</button>
+                          </>
+                        )}
+                      </div>
                     </article>
                   ))
-                ) : <div style={{padding:8}}>No events</div>}
+                ) : <div className="muted">No events</div>}
               </div>
             )}
 
             {isAdmin && (
-              <form onSubmit={create} style={{marginTop:12}}>
-                <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                  <input required placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
-                  <input placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
-                  <input type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})} />
-                  <input type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})} />
-                  <input placeholder="Location" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} />
-                  <label style={{fontSize:12}}>Target departments (hold Ctrl/Cmd to select multiple)</label>
-                  <select multiple value={form.departments || []} onChange={e=>{
+              <form onSubmit={create} className="event-form">
+                <div className="form-column">
+                  <input required className="event-input" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
+                  <input className="event-input" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
+                  <input className="event-input" type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})} />
+                  <input className="event-input" type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})} />
+                  <input className="event-input" placeholder="Location" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} />
+
+                  <label className="small-label">Target departments (hold Ctrl/Cmd to select multiple)</label>
+                  <select multiple className="event-input" value={form.departments || []} onChange={e=>{
                     const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
                     setForm(f=>({...f,departments:vals}));
-                  }} style={{minHeight:80}}>
+                  }}>
                     <option value="">-- none --</option>
                     {departmentsList.map(d => (
                       <option key={d._id} value={d._id}>{d.name || d.code || d._id}</option>
                     ))}
                   </select>
 
-                  <label style={{fontSize:12}}>Target programs (hold Ctrl/Cmd to select multiple)</label>
-                  <select multiple value={form.programs || []} onChange={e=>{
+                  <label className="small-label">Target programs (hold Ctrl/Cmd to select multiple)</label>
+                  <select multiple className="event-input" value={form.programs || []} onChange={e=>{
                     const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
                     setForm(f=>({...f,programs:vals}));
-                  }} style={{minHeight:80}}>
+                  }}>
                     <option value="">-- none --</option>
                     {programsList.map(p => (
                       <option key={p._id} value={p.courseCode}>{p.courseCode}{p.title ? ` — ${p.title}` : ''}</option>
                     ))}
                   </select>
 
-                  <select value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
+                  <select className="event-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
                     <option value="all">All (students & faculty)</option>
                     <option value="students">Students only</option>
                     <option value="faculty">Faculty only</option>
                     <option value="admins">Admins only</option>
                   </select>
-                  <div style={{display:'flex',gap:8}}>
-                    <button type="submit">Save event</button>
-                    <button type="button" onClick={()=>{ setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] }); }}>Clear</button>
+
+                  <div className="form-actions">
+                    <button type="submit" className="admins-btn admins-btn--primary">Save event</button>
+                    <button type="button" className="admins-btn" onClick={()=>{ setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] }); }}>Clear</button>
                   </div>
                 </div>
               </form>

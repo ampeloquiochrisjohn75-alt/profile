@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { fetchSections, createSection, fetchSyllabi, updateSection, deleteSection, fetchStudents, fetchFaculty } from '../api';
+import './AdminList.css';
+import './Sections.css';
 
 export default function Sections({ showMessage }) {
   const [rows, setRows] = useState([]);
@@ -168,19 +170,25 @@ export default function Sections({ showMessage }) {
           <h1 className="admins-title">Sections</h1>
           <p className="admins-lead">Create and view sections. Add student IDs (comma-separated) when creating a section.</p>
         </div>
+        <div className="admins-hero-aside">
+          <div className="admins-stat-pill" role="status">
+            <span className="admins-stat-value">{rows.length}</span>
+            <span className="admins-stat-label">sections</span>
+          </div>
+          <button type="button" className="admins-btn" onClick={() => load()}>Refresh</button>
+        </div>
       </header>
-
       <section className="admins-panel">
-        <div style={{padding:12}}>
-          <form onSubmit={submit} style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <input placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
-            <select value={form.courseCode} onChange={e=>setForm({...form,courseCode:e.target.value})}>
+        <div className="admins-panel-inner">
+          <form onSubmit={submit} className="sections-form">
+            <input className="sections-input" placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+            <select className="sections-input" value={form.courseCode} onChange={e=>setForm({...form,courseCode:e.target.value})}>
               <option value="">Select course</option>
               {syllabi.map(s => (
                 <option key={s._id} value={s.courseCode || s.title}>{s.title}{s.courseCode ? ` (${s.courseCode})` : ''}</option>
               ))}
             </select>
-            <select value={form.faculty || ''} onChange={e=>setForm({...form,faculty:e.target.value})}>
+            <select className="sections-input" value={form.faculty || ''} onChange={e=>setForm({...form,faculty:e.target.value})}>
               <option value="">Select adviser</option>
               {Object.keys(groupedFaculty).map(title => (
                 <optgroup key={title} label={title}>
@@ -191,9 +199,9 @@ export default function Sections({ showMessage }) {
               ))}
             </select>
 
-            <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <button type="button" onClick={()=>openStudentsModal(false)}>Select students…</button>
-              <div style={{fontSize:12,color:'#333'}}>
+            <div className="student-select">
+              <button type="button" className="admins-btn" onClick={()=>openStudentsModal(false)}>Select students…</button>
+              <div className="selected-summary">
                 {Array.isArray(form.students) && form.students.length > 0 ? (
                   <span>Selected: {form.students.map(id => {
                     const found = studentResults.find(s => String(s._id) === String(id));
@@ -203,91 +211,110 @@ export default function Sections({ showMessage }) {
               </div>
             </div>
 
-            <button type="submit">Create</button>
+            <div className="sections-actions">
+              <button type="submit" className="admins-btn admins-btn--primary">Create</button>
+            </div>
           </form>
         </div>
 
         <div>
-          {loading ? <div>Loading…</div> : (
-            <div>
-              {rows.map(s => (
-                <article key={s._id} style={{padding:12,borderBottom:'1px solid #eee'}}>
-                  {editingId === s._id ? (
-                    <form onSubmit={saveEdit} style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                      <input placeholder="Name" value={editForm.name} onChange={e=>setEditForm({...editForm,name:e.target.value})} />
-                      <select value={editForm.courseCode} onChange={e=>setEditForm({...editForm,courseCode:e.target.value})}>
-                        <option value="">Select course</option>
-                        {syllabi.map(ss => (
-                          <option key={ss._id} value={ss.courseCode || ss.title}>{ss.title}{ss.courseCode ? ` (${ss.courseCode})` : ''}</option>
-                        ))}
-                      </select>
-                      <select value={editForm.faculty || ''} onChange={e=>setEditForm({...editForm,faculty:e.target.value})}>
-                        <option value="">Select adviser</option>
-                        {Object.keys(groupedFaculty).map(title => (
-                          <optgroup key={title} label={title}>
-                            {groupedFaculty[title].map(f => (
-                              <option key={f._id} value={f._id}>{f.firstName} {f.lastName}{f.title ? ` ({f.title})` : ''}</option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
+          {loading ? <div style={{padding:12}}>Loading…</div> : (
+            rows.length === 0 ? (
+              <div className="admins-empty">
+                <div className="admins-empty-icon" aria-hidden>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M3 7h18M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7" />
+                    <path d="M8 7V5a4 4 0 0 1 8 0v2" />
+                  </svg>
+                </div>
+                <h2 className="admins-empty-title">No sections</h2>
+                <p className="admins-empty-text">No sections found. Create one using the form above.</p>
+              </div>
+            ) : (
+              <div className="sections-list">
+                {rows.map(s => (
+                  <article key={s._id} className="section-card">
+                    {editingId === s._id ? (
+                      <form onSubmit={saveEdit} className="sections-edit-form">
+                        <input className="sections-input" placeholder="Name" value={editForm.name} onChange={e=>setEditForm({...editForm,name:e.target.value})} />
+                        <select className="sections-input" value={editForm.courseCode} onChange={e=>setEditForm({...editForm,courseCode:e.target.value})}>
+                          <option value="">Select course</option>
+                          {syllabi.map(ss => (
+                            <option key={ss._id} value={ss.courseCode || ss.title}>{ss.title}{ss.courseCode ? ` (${ss.courseCode})` : ''}</option>
+                          ))}
+                        </select>
+                        <select className="sections-input" value={editForm.faculty || ''} onChange={e=>setEditForm({...editForm,faculty:e.target.value})}>
+                          <option value="">Select adviser</option>
+                          {Object.keys(groupedFaculty).map(title => (
+                            <optgroup key={title} label={title}>
+                              {groupedFaculty[title].map(f => (
+                                <option key={f._id} value={f._id}>{f.firstName} {f.lastName}{f.title ? ` ({f.title})` : ''}</option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
 
-                      <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <button type="button" onClick={()=>openStudentsModal(true)}>Select students…</button>
-                        <div style={{fontSize:12,color:'#333'}}>
-                          {Array.isArray(editForm.students) && editForm.students.length > 0 ? (
-                            <span>Selected: {editForm.students.join(', ')}</span>
-                          ) : (<span>No students</span>)}
+                        <div className="student-select">
+                          <button type="button" className="admins-btn" onClick={()=>openStudentsModal(true)}>Select students…</button>
+                          <div className="selected-summary">
+                            {Array.isArray(editForm.students) && editForm.students.length > 0 ? (
+                              <span>Selected: {editForm.students.join(', ')}</span>
+                            ) : (<span>No students</span>)}
+                          </div>
                         </div>
-                      </div>
 
-                      <button type="submit">Save</button>
-                      <button type="button" onClick={cancelEdit}>Cancel</button>
-                    </form>
-                  ) : (
-                    <>
-                      <h3>{s.name} {s.courseCode ? <small>({s.courseCode})</small> : null}</h3>
-                      <div>Faculty: {s.faculty ? `${s.faculty.firstName || ''} ${s.faculty.lastName || ''}` : '—'}</div>
-                      <div>Students: {(s.students || []).map(st => st.studentId || st._id).join(', ')}</div>
-                      <div style={{marginTop:8}}>
-                        <button type="button" onClick={()=>startEdit(s)}>Edit</button>
-                        <button type="button" style={{marginLeft:8}} onClick={()=>handleDelete(s._id)}>Delete</button>
-                      </div>
-                    </>
-                  )}
-                </article>
-              ))}
-            </div>
+                        <div className="sections-actions">
+                          <button type="submit" className="admins-btn admins-btn--primary">Save</button>
+                          <button type="button" className="admins-btn" onClick={cancelEdit}>Cancel</button>
+                        </div>
+                      </form>
+                    ) : (
+                      <>
+                        <div className="section-card-main">
+                          <h3 className="section-card-title">{s.name} {s.courseCode ? <small>({s.courseCode})</small> : null}</h3>
+                          <div className="section-card-meta">Faculty: {s.faculty ? `${s.faculty.firstName || ''} ${s.faculty.lastName || ''}` : '—'}</div>
+                          <div className="section-card-meta">Students: {(s.students || []).map(st => st.studentId || st._id).join(', ')}</div>
+                        </div>
+                        <div className="section-card-actions">
+                          <button type="button" className="admins-btn" onClick={()=>startEdit(s)}>Edit</button>
+                          <button type="button" className="admins-btn" onClick={()=>handleDelete(s._id)}>Delete</button>
+                        </div>
+                      </>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )
           )}
         </div>
       </section>
       {studentsModalOpen && (
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200}} onClick={closeStudentsModal}>
-          <div style={{background:'#fff',width:'min(1000px,94%)',maxHeight:'86vh',overflow:'auto',borderRadius:8,padding:16,boxShadow:'0 10px 30px rgba(0,0,0,0.2)'}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div className="modal-backdrop" onClick={closeStudentsModal}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
               <h3 style={{margin:0}}>Select students</h3>
-              <div style={{display:'flex',gap:8}}>
-                <button type="button" onClick={selectAllVisible}>Select visible</button>
-                <button type="button" onClick={clearSelectedStudents}>Clear</button>
-                <button type="button" onClick={closeStudentsModal}>Close</button>
+              <div className="modal-actions">
+                <button type="button" className="admins-btn" onClick={selectAllVisible}>Select visible</button>
+                <button type="button" className="admins-btn" onClick={clearSelectedStudents}>Clear</button>
+                <button type="button" className="admins-btn" onClick={closeStudentsModal}>Close</button>
               </div>
             </div>
 
-            <div style={{display:'flex',gap:8,marginBottom:12}}>
-              <input placeholder="Search by id or name" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)} style={{flex:1}} />
-              <button type="button" onClick={searchStudents}>Search</button>
+            <div className="modal-search">
+              <input placeholder="Search by id or name" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)} />
+              <button type="button" className="admins-btn" onClick={searchStudents}>Search</button>
             </div>
 
-            <div style={{border:'1px solid #eee',borderRadius:6,padding:8,maxHeight:'56vh',overflow:'auto'}}>
+            <div className="modal-list">
               {modalLoading ? <div>Loading…</div> : (
                 (studentResults || []).length === 0 ? <div style={{padding:12}}>No results</div> : (
                   studentResults.map(st => {
                     const id = String(st._id);
                     const checked = modalForEdit ? (Array.isArray(editForm.students) && editForm.students.includes(id)) : (Array.isArray(form.students) && form.students.includes(id));
                     return (
-                      <label key={id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 8px',borderBottom:'1px solid #fafafa'}}>
+                      <label key={id} className="modal-item">
                         <input type="checkbox" checked={checked} onChange={()=>toggleStudentSelection(id)} />
-                        <div style={{fontSize:14}}>{st.studentId ? `${st.studentId} — ` : ''}{(st.firstName || '') + (st.lastName ? ' ' + st.lastName : '')}</div>
+                        <div className="modal-item-text">{st.studentId ? `${st.studentId} — ` : ''}{(st.firstName || '') + (st.lastName ? ' ' + st.lastName : '')}</div>
                       </label>
                     );
                   })
@@ -295,8 +322,8 @@ export default function Sections({ showMessage }) {
               )}
             </div>
 
-            <div style={{marginTop:12,textAlign:'right'}}>
-              <button type="button" onClick={commitStudentsModal}>Done</button>
+            <div className="modal-footer">
+              <button type="button" className="admins-btn admins-btn--primary" onClick={commitStudentsModal}>Done</button>
             </div>
           </div>
         </div>

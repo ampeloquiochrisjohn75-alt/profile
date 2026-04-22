@@ -1,0 +1,59 @@
+/* Faculty specific tweaks built on top of AdminList.css */
+
+.faculty-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px;
+}
+
+.faculty-input {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.faculty-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.faculty-row-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.faculty-edit-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* minor adjustments to match admin table spacing */
+.admins-panel-inner {
+  padding: 12px;
+}
+
+@media (max-width: 700px) {
+  .faculty-form {
+    gap: 8px;
+  }
+  .faculty-input {
+    min-width: 120px;
+    flex: 1 1 auto;
+  }
+  .faculty-edit-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

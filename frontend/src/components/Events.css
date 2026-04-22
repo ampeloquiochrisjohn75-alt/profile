@@ -1,0 +1,85 @@
+/* Events page styles built on AdminList.css */
+
+.events-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px;
+}
+.events-input {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 160px;
+  box-sizing: border-box;
+}
+.events-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+}
+.event-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+.event-card-main {
+  max-width: 74%;
+}
+.event-card-title {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.event-card-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.event-card-meta {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+.event-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.event-edit-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .event-card {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .event-card-main {
+    max-width: 100%;
+  }
+  .events-input {
+    min-width: 120px;
+    flex: 1 1 auto;
+  }
+  .event-edit-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

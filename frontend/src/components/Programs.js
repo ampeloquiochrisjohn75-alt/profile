@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { fetchCourses, createCourse, updateCourse, deleteCourse, fetchStudents } from '../api';
+import './AdminList.css';
+import './Programs.css';
 
 export default function Programs({ showMessage }) {
   const [groups, setGroups] = useState([]);
@@ -85,47 +87,63 @@ export default function Programs({ showMessage }) {
           <h1 className="admins-title">Program codes</h1>
           <p className="admins-lead">Manage program codes used across syllabi and sections.</p>
         </div>
+        <div className="admins-hero-aside">
+          <div className="admins-stat-pill" role="status">
+            <span className="admins-stat-value">{groups.length}</span>
+            <span className="admins-stat-label">{groups.length === 1 ? 'program' : 'programs'}</span>
+          </div>
+          <button type="button" className="admins-btn" onClick={() => load()}>Refresh</button>
+        </div>
       </header>
 
       <section className="admins-panel">
-        <div style={{padding:12}}>
-          <form onSubmit={submit} style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <input placeholder="Program code (e.g. BIT)" value={newCode} onChange={e=>setNewCode(e.target.value)} />
-            <input placeholder="Optional title" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
-            <button type="submit">Add program</button>
+        <div className="admins-panel-inner">
+          <form onSubmit={submit} className="programs-form">
+            <input className="program-input" placeholder="Program code (e.g. BIT)" value={newCode} onChange={e=>setNewCode(e.target.value)} />
+            <input className="program-input" placeholder="Optional title" value={newTitle} onChange={e=>setNewTitle(e.target.value)} />
+            <div className="program-actions">
+              <button type="submit" className="admins-btn admins-btn--primary">Add program</button>
+              <button type="button" className="admins-btn" onClick={() => { setNewCode(''); setNewTitle(''); }}>Clear</button>
+            </div>
           </form>
         </div>
 
         <div>
-          {loading ? <div>Loading…</div> : (
-            <div>
-              {groups.length === 0 ? <div style={{padding:12}}>No programs</div> : groups.map(c => (
-                <article key={c._id} style={{padding:12,borderBottom:'1px solid #eee'}}>
-                  <h3>{c.courseCode} <small style={{marginLeft:8}}>{c.title || ''}</small></h3>
-                  <div style={{color:'#444',fontSize:13}}>{c.description || '—'}</div>
-                  <div style={{marginTop:8}}>
-                    <button type="button" onClick={()=>handleRenameCourse(c)}>Rename</button>
-                    <button type="button" style={{marginLeft:8}} onClick={()=>handleDeleteCourse(c)}>Delete</button>
-                    <button type="button" style={{marginLeft:8}} onClick={()=>toggleStudents(c)}>{expanded[c._id] ? 'Hide students' : 'Show students'}</button>
-                  </div>
-                  {expanded[c._id] && (
-                    <div style={{marginTop:8,padding:8,background:'#fafafa',border:'1px solid #eee'}}>
-                      {expanded[c._id].loading ? <div>Loading students…</div> : (
-                        expanded[c._id].students && expanded[c._id].students.length ? (
-                          <ul style={{margin:0,paddingLeft:16}}>
-                            {expanded[c._id].students.map(s => (
-                              <li key={s._id}>
-                                <a href={`/students/${s._id}`}>{s.studentId}</a> — {s.firstName || ''} {s.lastName || ''}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : <div>No students enrolled</div>
-                      )}
+          {loading ? <div style={{padding:12}}>Loading…</div> : (
+            groups.length === 0 ? (
+              <div style={{padding:12}}>No programs</div>
+            ) : (
+              <div className="program-list">
+                {groups.map(c => (
+                  <article key={c._id} className="program-card">
+                    <div className="program-card-main">
+                      <div className="program-card-title"><strong>{c.courseCode}</strong> <small>{c.title || ''}</small></div>
+                      <div className="program-card-desc">{c.description || '—'}</div>
                     </div>
-                  )}
-                </article>
-              ))}
-            </div>
+                    <div className="program-card-actions">
+                      <button type="button" className="admins-btn" onClick={()=>handleRenameCourse(c)}>Rename</button>
+                      <button type="button" className="admins-btn" onClick={()=>handleDeleteCourse(c)}>Delete</button>
+                      <button type="button" className="admins-btn" onClick={()=>toggleStudents(c)}>{expanded[c._id] ? 'Hide students' : 'Show students'}</button>
+                    </div>
+                    {expanded[c._id] && (
+                      <div className="program-students">
+                        {expanded[c._id].loading ? <div>Loading students…</div> : (
+                          expanded[c._id].students && expanded[c._id].students.length ? (
+                            <ul className="program-students-list">
+                              {expanded[c._id].students.map(s => (
+                                <li key={s._id}>
+                                  <a href={`/students/${s._id}`}>{s.studentId}</a> — {s.firstName || ''} {s.lastName || ''}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : <div>No students enrolled</div>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )
           )}
         </div>
       </section>

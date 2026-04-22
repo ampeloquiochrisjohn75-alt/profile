@@ -1,0 +1,90 @@
+/* Programs page styles, built on top of AdminList.css */
+
+.programs-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px;
+}
+
+.program-input {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 180px;
+  box-sizing: border-box;
+}
+
+.program-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.program-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.program-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.program-card-main {
+  max-width: 74%;
+}
+
+.program-card-title {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.program-card-desc {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.program-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.program-students {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.program-students-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+@media (max-width: 700px) {
+  .program-card {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .program-card-main {
+    max-width: 100%;
+  }
+  .program-input {
+    min-width: 120px;
+    flex: 1 1 auto;
+  }
+}

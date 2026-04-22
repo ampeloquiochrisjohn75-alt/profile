@@ -1,0 +1,87 @@
+/* Syllabus page styles built on AdminList.css */
+
+.syllabus-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px;
+}
+
+.syllabus-input {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  min-width: 160px;
+  box-sizing: border-box;
+}
+
+.syllabus-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.syllabus-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.syllabus-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.syllabus-card-main {
+  max-width: 74%;
+}
+
+.syllabus-card-title {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.syllabus-card-desc {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.syllabus-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.syllabus-edit-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .syllabus-card {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .syllabus-card-main {
+    max-width: 100%;
+  }
+  .syllabus-input {
+    min-width: 120px;
+    flex: 1 1 auto;
+  }
+  .syllabus-edit-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

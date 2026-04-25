@@ -68,14 +68,14 @@
   flex-shrink: 0;
   border: none;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.06);
+  background: #ffffff;
   color: var(--text);
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .app-btn-theme-toggle:hover {
-  background: rgba(15, 23, 42, 0.09);
+  background: #ffffff;
 }
 .app-btn-theme-toggle:focus-visible {
   outline: 2px solid var(--accent);
@@ -149,7 +149,15 @@
   align-items: center;
   gap: 14px;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
+}
+
+.app-identity-group {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .app-brand-mark {
@@ -245,56 +253,140 @@
   gap: 12px;
   flex-shrink: 0;
   margin-left: auto;
+  margin-right: 0;
+}
+
+.app-header-user-inline {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: 0;
 }
 
 .app-user-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 4px 4px 4px;
-  padding-right: 12px;
+  gap: 11px;
+  padding: 5px 10px 5px 5px;
   border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 255, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow:
+    0 6px 16px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.app-user-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow:
+    0 10px 20px rgba(15, 23, 42, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .app-user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   color: #fff;
-  background: linear-gradient(145deg, #334155 0%, #1e293b 100%);
+  background: linear-gradient(145deg, #334155 0%, #1f2f46 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 3px 10px rgba(15, 23, 42, 0.2);
 }
 
 .app-user-meta {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 3px;
   line-height: 1.15;
   min-width: 0;
 }
 
 .app-user-id {
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text);
-  max-width: 140px;
+  max-width: 152px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .app-user-role {
-  font-size: 0.65rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  font-size: 0.62rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  letter-spacing: 0.09em;
+  color: #475569;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.06), rgba(15, 23, 42, 0.02));
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  padding: 3px 8px;
+  line-height: 1;
+}
+
+/* Header account text format: ID | FULL NAME */
+.app-header .app-user-chip {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-header .app-user-chip:hover {
+  transform: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.app-user-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.app-user-inline-id {
+  font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #0f172a;
+}
+
+.app-user-inline-sep {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.app-user-inline-name {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #047857;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
 }
 
 .app-btn-logout {
@@ -324,6 +416,55 @@
 .app-btn-logout:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Shared compact action buttons for Edit/Delete actions */
+.app-action-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-action-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    transform 0.12s ease;
+}
+
+.app-action-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.app-action-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app-action-btn--danger {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.app-action-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.app-action-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Account dropdown (person icon) */
@@ -568,6 +709,9 @@
   }
   /* hide header user on small screens — moved into sidebar menu */
   .app-header-user {
+    display: none;
+  }
+  .app-header-user-inline {
     display: none;
   }
 

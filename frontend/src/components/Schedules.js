@@ -11,6 +11,18 @@ function formatKey(d) {
   return `${y}-${m}-${day}`;
 }
 
+function formatDisplayDate(value) {
+  if (!value) return 'No date selected';
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 function monthMatrix(monthStart) {
   // returns array of 6 weeks, each week is 7 Date objects
   const year = monthStart.getFullYear();
@@ -108,6 +120,11 @@ export default function Schedules({ showMessage }) {
 
   const prevMonth = () => setMonthStart(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
   const nextMonth = () => setMonthStart(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    setMonthStart(new Date(now.getFullYear(), now.getMonth(), 1));
+    onSelectDay(now);
+  };
 
   const onSelectDay = (d) => {
     setSelectedDate(formatKey(d));
@@ -178,10 +195,136 @@ export default function Schedules({ showMessage }) {
 
       <section className="admins-panel schedules-panel">
         <div className="schedules-left">
+          <div className="events-panel events-panel--top">
+            <h3 className="events-panel-title">Events on {formatDisplayDate(selectedDate)}</h3>
+            {loading ? <div className="muted">Loading…</div> : (
+              <div>
+                {(selectedDate && (eventsByDay[selectedDate] || []).length) ? (
+                  (eventsByDay[selectedDate] || []).map(ev => (
+                    <article key={ev._id} className="event-card">
+                      <div className="event-card-main">
+                        <div className="event-card-title">{ev.title}</div>
+                        <div className="event-card-meta">{ev.start ? new Date(ev.start).toLocaleString() : ''} {ev.end ? `— ${new Date(ev.end).toLocaleString()}` : ''}</div>
+                        <div className="event-card-sub">{ev.location || ''} • {ev.visibility}</div>
+                        {ev.departments && ev.departments.length ? (
+                          <div className="event-card-list">Departments: {ev.departments.map(d => (d && (d.name || d.code)) || d).join(', ')}</div>
+                        ) : null}
+                        {ev.programs && ev.programs.length ? (
+                          <div className="event-card-list">Programs: {ev.programs.join(', ')}</div>
+                        ) : null}
+                      </div>
+                      <div className="event-card-actions">
+                        {isAdmin && (
+                          <div className="app-action-buttons">
+                            <button type="button" className="app-action-btn" title="Edit" aria-label="Edit event" onClick={() => {
+                              setEditingId(ev._id);
+                              setForm({
+                                title: ev.title,
+                                description: ev.description || '',
+                                start: ev.start ? new Date(ev.start).toISOString().slice(0,16) : '',
+                                end: ev.end ? new Date(ev.end).toISOString().slice(0,16) : '',
+                                location: ev.location || '',
+                                visibility: ev.visibility || 'all',
+                                departments: ev.departments ? ev.departments.map(d => (d && d._id ? d._id.toString() : d)) : [],
+                                programs: ev.programs || [],
+                              });
+                            }}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                              </svg>
+                            </button>
+                            <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete event" onClick={() => handleDelete(ev._id)}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6M14 11v6" />
+                                <path d="M9 6V4h6v2" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  ))
+                ) : <div className="muted">No events on this date</div>}
+              </div>
+            )}
+
+            {isAdmin && (
+              <form onSubmit={create} className="event-form">
+                <div className="form-column">
+                  <div className="input-field">
+                    <label className="small-label">Event title</label>
+                    <input required className="event-input" placeholder="Enter title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
+                  </div>
+                  <div className="input-field">
+                    <label className="small-label">Description</label>
+                    <input className="event-input" placeholder="Short description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
+                  </div>
+                  <div className="input-field">
+                    <label className="small-label">Start date and time</label>
+                    <input className="event-input" type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})} />
+                  </div>
+                  <div className="input-field">
+                    <label className="small-label">End date and time</label>
+                    <input className="event-input" type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})} />
+                  </div>
+                  <div className="input-field input-field--full">
+                    <label className="small-label">Location</label>
+                    <input className="event-input" placeholder="Room, venue, or online link" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} />
+                  </div>
+
+                  <div className="multi-select-field">
+                    <label className="small-label">Target departments (hold Ctrl/Cmd to select multiple)</label>
+                    <select multiple className="event-input" value={form.departments || []} onChange={e=>{
+                      const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
+                      setForm(f=>({...f,departments:vals}));
+                    }}>
+                      <option value="">-- none --</option>
+                      {departmentsList.map(d => (
+                        <option key={d._id} value={d._id}>{d.name || d.code || d._id}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="multi-select-field">
+                    <label className="small-label">Target programs (hold Ctrl/Cmd to select multiple)</label>
+                    <select multiple className="event-input" value={form.programs || []} onChange={e=>{
+                      const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
+                      setForm(f=>({...f,programs:vals}));
+                    }}>
+                      <option value="">-- none --</option>
+                      {programsList.map(p => (
+                        <option key={p._id} value={p.courseCode}>{p.courseCode}{p.title ? ` — ${p.title}` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="input-field input-field--full">
+                    <label className="small-label">Who can see this event?</label>
+                    <select className="event-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
+                      <option value="all">All (students & faculty)</option>
+                      <option value="students">Students only</option>
+                      <option value="faculty">Faculty only</option>
+                      <option value="admins">Admins only</option>
+                    </select>
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="submit" className="admins-btn admins-btn--primary">Save event</button>
+                    <button type="button" className="admins-btn" onClick={()=>{ setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] }); }}>Clear</button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+
           <div className="calendar-header">
             <div className="calendar-nav">
               <button type="button" className="admins-btn" onClick={prevMonth}>&lt;</button>
               <button type="button" className="admins-btn" onClick={nextMonth}>&gt;</button>
+              <button type="button" className="admins-btn" onClick={goToCurrentMonth}>Today</button>
             </div>
             <div className="calendar-title">{monthStart.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
             <div className="calendar-actions" />
@@ -212,99 +355,6 @@ export default function Schedules({ showMessage }) {
             }))}
           </div>
         </div>
-
-        <aside className="schedules-aside">
-          <div className="events-panel">
-            <h3 className="events-panel-title">Events on {selectedDate || '—'}</h3>
-            {loading ? <div className="muted">Loading…</div> : (
-              <div>
-                {(selectedDate && (eventsByDay[selectedDate] || []).length) ? (
-                  (eventsByDay[selectedDate] || []).map(ev => (
-                    <article key={ev._id} className="event-card">
-                      <div className="event-card-main">
-                        <div className="event-card-title">{ev.title}</div>
-                        <div className="event-card-meta">{ev.start ? new Date(ev.start).toLocaleString() : ''} {ev.end ? `— ${new Date(ev.end).toLocaleString()}` : ''}</div>
-                        <div className="event-card-sub">{ev.location || ''} • {ev.visibility}</div>
-                        {ev.departments && ev.departments.length ? (
-                          <div className="event-card-list">Departments: {ev.departments.map(d => (d && (d.name || d.code)) || d).join(', ')}</div>
-                        ) : null}
-                        {ev.programs && ev.programs.length ? (
-                          <div className="event-card-list">Programs: {ev.programs.join(', ')}</div>
-                        ) : null}
-                      </div>
-                      <div className="event-card-actions">
-                        {isAdmin && (
-                          <>
-                            <button type="button" className="admins-btn" onClick={() => {
-                              setEditingId(ev._id);
-                              setForm({
-                                title: ev.title,
-                                description: ev.description || '',
-                                start: ev.start ? new Date(ev.start).toISOString().slice(0,16) : '',
-                                end: ev.end ? new Date(ev.end).toISOString().slice(0,16) : '',
-                                location: ev.location || '',
-                                visibility: ev.visibility || 'all',
-                                departments: ev.departments ? ev.departments.map(d => (d && d._id ? d._id.toString() : d)) : [],
-                                programs: ev.programs || [],
-                              });
-                            }}>Edit</button>
-                            <button type="button" className="admins-btn" onClick={() => handleDelete(ev._id)}>Delete</button>
-                          </>
-                        )}
-                      </div>
-                    </article>
-                  ))
-                ) : <div className="muted">No events</div>}
-              </div>
-            )}
-
-            {isAdmin && (
-              <form onSubmit={create} className="event-form">
-                <div className="form-column">
-                  <input required className="event-input" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
-                  <input className="event-input" placeholder="Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
-                  <input className="event-input" type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})} />
-                  <input className="event-input" type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})} />
-                  <input className="event-input" placeholder="Location" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} />
-
-                  <label className="small-label">Target departments (hold Ctrl/Cmd to select multiple)</label>
-                  <select multiple className="event-input" value={form.departments || []} onChange={e=>{
-                    const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
-                    setForm(f=>({...f,departments:vals}));
-                  }}>
-                    <option value="">-- none --</option>
-                    {departmentsList.map(d => (
-                      <option key={d._id} value={d._id}>{d.name || d.code || d._id}</option>
-                    ))}
-                  </select>
-
-                  <label className="small-label">Target programs (hold Ctrl/Cmd to select multiple)</label>
-                  <select multiple className="event-input" value={form.programs || []} onChange={e=>{
-                    const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
-                    setForm(f=>({...f,programs:vals}));
-                  }}>
-                    <option value="">-- none --</option>
-                    {programsList.map(p => (
-                      <option key={p._id} value={p.courseCode}>{p.courseCode}{p.title ? ` — ${p.title}` : ''}</option>
-                    ))}
-                  </select>
-
-                  <select className="event-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
-                    <option value="all">All (students & faculty)</option>
-                    <option value="students">Students only</option>
-                    <option value="faculty">Faculty only</option>
-                    <option value="admins">Admins only</option>
-                  </select>
-
-                  <div className="form-actions">
-                    <button type="submit" className="admins-btn admins-btn--primary">Save event</button>
-                    <button type="button" className="admins-btn" onClick={()=>{ setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] }); }}>Clear</button>
-                  </div>
-                </div>
-              </form>
-            )}
-          </div>
-        </aside>
       </section>
     </div>
   );

@@ -121,8 +121,22 @@ export default function Programs({ showMessage }) {
                       <div className="program-card-desc">{c.description || '—'}</div>
                     </div>
                     <div className="program-card-actions">
-                      <button type="button" className="admins-btn" onClick={()=>handleRenameCourse(c)}>Rename</button>
-                      <button type="button" className="admins-btn" onClick={()=>handleDeleteCourse(c)}>Delete</button>
+                      <div className="app-action-buttons">
+                        <button type="button" className="app-action-btn" title="Rename" aria-label="Rename program" onClick={()=>handleRenameCourse(c)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete program" onClick={()=>handleDeleteCourse(c)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4h6v2" />
+                          </svg>
+                        </button>
+                      </div>
                       <button type="button" className="admins-btn" onClick={()=>toggleStudents(c)}>{expanded[c._id] ? 'Hide students' : 'Show students'}</button>
                     </div>
                     {expanded[c._id] && (

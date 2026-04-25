@@ -248,12 +248,19 @@ body {
   border: 1px solid rgba(15, 23, 42, 0.06) !important;
 }
 
+/* Header user now uses inline text format (ID | NAME), keep it flat */
+.dark .app-header .app-user-chip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Make the header account (person) button and theme toggle white in dark mode */
 .dark .app-account-toggle,
 .dark .app-btn-theme-toggle {
   background: #ffffff !important;
   color: #0b1220 !important;
-  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  border: none !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
 }
 

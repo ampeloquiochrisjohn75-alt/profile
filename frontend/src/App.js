@@ -25,7 +25,28 @@ import Reports from './components/Reports';
 
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 
-function HeaderAccount({ user, userInitial, darkMode, setDarkMode, onProfile, onLogout }) {
+function HeaderUserInline({ user }) {
+  const headerName = [user && user.firstName, user && user.lastName]
+    .map((v) => (v ? String(v).trim() : ''))
+    .filter(Boolean)
+    .join(' ')
+    .toUpperCase();
+  const headerId = (user && (user.studentId || user.email || user.firstName || 'USER')) || 'USER';
+
+  return (
+    <div className="app-header-user-inline">
+      <div className="app-user-chip">
+        <div className="app-user-inline">
+          <span className="app-user-inline-id" title={headerId}>{headerId}</span>
+          <span className="app-user-inline-sep" aria-hidden>|</span>
+          <span className="app-user-inline-name" title={headerName || headerId}>{headerName || headerId}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeaderAccount({ darkMode, setDarkMode, onProfile, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -49,16 +70,6 @@ function HeaderAccount({ user, userInitial, darkMode, setDarkMode, onProfile, on
 
   return (
     <div className="app-header-user">
-      <div className="app-user-chip">
-        <span className="app-user-avatar" aria-hidden>
-          {String(userInitial).toUpperCase()}
-        </span>
-        <div className="app-user-meta">
-          <span className="app-user-id" title={user && user.studentId}>{user && (user.studentId || user.email || user.firstName || '')}</span>
-          <span className="app-user-role">{user && user.role}</span>
-        </div>
-      </div>
-
       <button
         type="button"
         className="app-btn-theme-toggle"
@@ -368,11 +379,6 @@ function App() {
     }
   };
 
-  const userInitial =
-    (user && user.firstName && String(user.firstName).trim()[0]) ||
-    (user && user.studentId && String(user.studentId)[0]) ||
-    '?';
-
   // Layout that uses react-router location to optionally trigger profile loads and protect routes
   function AppInner() {
     const navigate = useNavigate();
@@ -596,23 +602,24 @@ function App() {
                   <path d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <div className="app-brand">
-                <div className="app-brand-mark" aria-hidden="true">
-                  <img
-                    src={`${process.env.PUBLIC_URL || ''}/uploads/logo.png`}
-                    alt=""
-                    className="app-brand-logo"
-                    loading="lazy"
-                  />
+              <div className="app-identity-group">
+                <div className="app-brand">
+                  <div className="app-brand-mark" aria-hidden="true">
+                    <img
+                      src={`${process.env.PUBLIC_URL || ''}/uploads/logo.png`}
+                      alt=""
+                      className="app-brand-logo"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="app-brand-text">
+                    <span className="app-brand-title">Student Profiling System</span>
+                    <span className="app-brand-tagline">Skills, programs & records</span>
+                  </div>
                 </div>
-                <div className="app-brand-text">
-                  <span className="app-brand-title">Student Profiling System</span>
-                  <span className="app-brand-tagline">Skills, programs & records</span>
-                </div>
+                <HeaderUserInline user={user} />
               </div>
               <HeaderAccount
-                user={user}
-                userInitial={userInitial}
                 darkMode={darkMode}
                 setDarkMode={setDarkMode}
                 onProfile={() => navigate('/account')}

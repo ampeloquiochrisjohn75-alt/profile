@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchDepartments, fetchSyllabi } from '../api';
 import './StudentForm.css';
 
-export default function StudentForm({ onSubmit, onCancel, initial = null, allowSkills = true, isRegistration = false }){
+export default function StudentForm({ onSubmit, onCancel, initial = null, allowSkills = true, isRegistration = false, showMessage }){
   const [form, setForm] = useState({ studentId: '', firstName: '', lastName: '', email: '', course: '', skills: '', nonAcademicActivities: '', affiliations: '', department: '', password: '', confirmPassword: '' });
   const [academic, setAcademic] = useState([]);
   const [violations, setViolations] = useState([]);
@@ -34,6 +34,11 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
     setAcademic(Array.isArray(initial.academicHistory) ? initial.academicHistory.map(a => ({ ...a })) : []);
     setViolations(Array.isArray(initial.violations) ? initial.violations.map(v => ({ ...v })) : []);
   }, [initial]);
+
+  const capitalizeName = (s) => {
+    if (!s && s !== '') return s;
+    return String(s || '').split(' ').map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : '').join(' ');
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -75,7 +80,13 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
 
   const handle = (e) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    if (name === 'firstName' || name === 'lastName') {
+      // keep input normalized with capitalized words as user types
+      const v = capitalizeName(value);
+      setForm(f => ({ ...f, [name]: v }));
+    } else {
+      setForm(f => ({ ...f, [name]: value }));
+    }
   };
 
   const addAcademic = () => setAcademic(a => [...a, { institution: '', degree: '', year: '', gpa: '', notes: '' }]);
@@ -91,36 +102,44 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
     
     // Password validation for registration
     if (isRegistration || (!initial && !allowSkills)) { // When adding new student (not editing)
-      if (!form.firstName || !form.firstName.trim()) {
-        alert('First name is required for registration');
-        return;
-      }
-      if (!form.lastName || !form.lastName.trim()) {
-        alert('Last name is required for registration');
-        return;
-      }
-      if (!form.email) {
-        alert('Email is required for registration');
-        return;
-      }
-      if (!form.password) {
-        alert('Password is required');
-        return;
-      }
-      if (form.password.length < 6) {
-        alert('Password must be at least 6 characters');
-        return;
-      }
-      if (form.password !== form.confirmPassword) {
-        alert('Passwords do not match');
-        return;
-      }
+        if (!form.firstName || !form.firstName.trim()) {
+          (showMessage || ((m) => alert(m)))('First name is required for registration', 'error');
+          return;
+        }
+        if (!form.lastName || !form.lastName.trim()) {
+          (showMessage || ((m) => alert(m)))('Last name is required for registration', 'error');
+          return;
+        }
+        if (!form.email) {
+          (showMessage || ((m) => alert(m)))('Email is required for registration', 'error');
+          return;
+        }
+        if (!form.password) {
+          (showMessage || ((m) => alert(m)))('Password is required', 'error');
+          return;
+        }
+        if (form.password.length < 6) {
+          (showMessage || ((m) => alert(m)))('Password must be at least 6 characters', 'error');
+          return;
+        }
+        if (form.password !== form.confirmPassword) {
+          (showMessage || ((m) => alert(m)))('Passwords do not match', 'error');
+          return;
+        }
     }
     
+    // Normalize names before submit (apply to both create and edit)
+    const firstNameVal = capitalizeName(form.firstName);
+    const lastNameVal = capitalizeName(form.lastName);
+    // ensure visible form matches normalized values
+    if (form.firstName !== firstNameVal || form.lastName !== lastNameVal) {
+      setForm(f => ({ ...f, firstName: firstNameVal, lastName: lastNameVal }));
+    }
+
     const payload = {
       ...(initial && form.studentId ? { studentId: form.studentId } : {}),
-      firstName: form.firstName,
-      lastName: form.lastName,
+      firstName: firstNameVal,
+      lastName: lastNameVal,
       email: form.email,
       course: form.course,
       // Include password for registration

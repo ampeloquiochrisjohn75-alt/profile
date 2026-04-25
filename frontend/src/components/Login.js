@@ -34,7 +34,7 @@ export default function Login({ onLogin, onSwitchToRegister, onForgotPassword })
     try {
       await onLogin({ studentId, password });
     } catch (err) {
-      alert(err.message || 'Login failed');
+      // App-level `onLogin` already shows the popup toast; avoid native alert
     } finally {
       setLoading(false);
     }

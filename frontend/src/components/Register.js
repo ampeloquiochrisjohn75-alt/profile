@@ -16,7 +16,7 @@ export default function Register({ onRegister, switchToLogin }) {
     try {
       await onRegister({ email, password, role, firstName, lastName, course });
     } catch (err) {
-      alert(err.message || 'Register failed');
+      // App-level `onRegister` already shows the popup toast; avoid native alert
     } finally { setLoading(false); }
   };
 

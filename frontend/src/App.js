@@ -123,6 +123,7 @@ function App() {
   });
   const [homeRefreshKey] = useState(0);
   const [flash, setFlash] = useState(null);
+  const flashTimerRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     try {
@@ -134,8 +135,26 @@ function App() {
   const navigateRef = useRef(null);
 
   const showMessage = useCallback((msg, type = 'info', timeout = 4000) => {
-    setFlash({ msg, type });
-    if (timeout > 0) setTimeout(() => setFlash(null), timeout);
+    if (flashTimerRef.current) {
+      clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = null;
+    }
+    setFlash({ msg, type, timeout });
+    if (timeout > 0) {
+      flashTimerRef.current = setTimeout(() => {
+        setFlash(null);
+        flashTimerRef.current = null;
+      }, timeout);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) {
+        clearTimeout(flashTimerRef.current);
+        flashTimerRef.current = null;
+      }
+    };
   }, []);
 
   // profile fetching is centralized in AuthContext; App listens to profile via useAuth inside AppInner
@@ -505,6 +524,36 @@ function App() {
 
     return (
       <div className="App">
+        {flash && (
+          <div className={`app-toast ${flash.type}`} role="status" aria-live="polite">
+            <div className="app-toast-inner">
+              <div className="app-toast-icon" aria-hidden>
+                    {flash.type === 'error' ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                        <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : flash.type === 'success' ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+                        <path d="M12 8v4l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+              <div className="app-toast-body">
+                <div className="app-toast-msg">{flash.msg}</div>
+              </div>
+              <button className="app-toast-close" onClick={() => { if (flashTimerRef.current) { clearTimeout(flashTimerRef.current); flashTimerRef.current = null; } setFlash(null); }} aria-label="Dismiss">×</button>
+            </div>
+            {flash.timeout > 0 && (
+              <div className="app-toast-progress" style={{ animationDuration: `${flash.timeout}ms` }} />
+            )}
+          </div>
+        )}
         {!user ? (
         <div className="auth-container">
           <button
@@ -585,15 +634,11 @@ function App() {
             />
             <div className="app-content-wrap">
           <main className="app-content">
-            {flash && (
-              <div className={`flash ${flash.type}`}>
-                {flash.msg}
-              </div>
-            )}
+            {/* flash moved to top-level floating toast (.app-toast) */}
 
             {access.isAdmin && view === 'list' && (
               <Suspense fallback={<Spinner />}>
-                <UsersPage onAddStudent={() => navigate('/users/add')} />
+                <UsersPage onAddStudent={() => navigate('/users/add')} showMessage={showMessage} />
               </Suspense>
             )}
 
@@ -665,7 +710,7 @@ function App() {
             )}
 
             {view === 'add' && (
-              <StudentForm onSubmit={handleAdd} onCancel={() => setViewTracked('list')} isRegistration={true} />
+              <StudentForm onSubmit={handleAdd} onCancel={() => setViewTracked('list')} isRegistration={true} showMessage={showMessage} />
             )}
 
             {view === 'profile' && !selected && (
@@ -700,6 +745,7 @@ function App() {
                     setViewTracked('list');
                     try { navigate('/users'); } catch (e) { if (typeof window !== 'undefined') window.history.pushState({}, '', '/users'); }
                   }}
+                  showMessage={showMessage}
                 />
               </div>
             )}

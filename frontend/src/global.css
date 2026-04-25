@@ -181,3 +181,83 @@ body {
 .dark .app-nav-btn.is-active {
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
+
+/* Custom scrollbar — modern, subtle and cross-browser */
+:root {
+  --scrollbar-width: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(15, 23, 42, 0.18);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.30);
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width);
+  height: var(--scrollbar-width);
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 150ms ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Utility class for containers that should always show a rounded thumb */
+.scrollbar-rounded {
+  scrollbar-width: thin;
+}
+.scrollbar-rounded::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+}
+
+/* Accessibility: make thumb more visible when focused within */
+:focus-within ::-webkit-scrollbar-thumb {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04) inset;
+}
+
+/* Strong overrides for header logo and user chip in dark mode
+   Make the logo container and the username chip pure white so
+   they match the light-background style even while the rest of the
+   UI is in dark theme. Use !important here to override other rules
+   that may be reapplied or restored by edits. */
+.dark .app-brand-mark,
+.dark .app-header .app-user-chip,
+.dark .app-user-chip {
+  background: #ffffff !important;
+  color: #0b1220 !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.dark .app-user-avatar {
+  background: #ffffff !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Make the header account (person) button and theme toggle white in dark mode */
+.dark .app-account-toggle,
+.dark .app-btn-theme-toggle {
+  background: #ffffff !important;
+  color: #0b1220 !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.dark .app-account-toggle:hover,
+.dark .app-btn-theme-toggle:hover {
+  background: #fafafa !important;
+}

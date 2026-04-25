@@ -3,7 +3,7 @@ import { fetchStudents, exportStudentsCSV, deleteStudent } from '../api';
 import StudentList from '../components/StudentList';
 import { useNavigate } from 'react-router-dom';
 
-export default function UsersPage({ onAddStudent }){
+export default function UsersPage({ onAddStudent, showMessage }){
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ skill: '', activity: '', q: '', courseCode: '' });
@@ -87,7 +87,7 @@ export default function UsersPage({ onAddStudent }){
           window.dispatchEvent(new Event('students:reload'));
         } catch (err) {
           console.error('Failed to delete student', err);
-          window.alert('Failed to delete student');
+          (showMessage || ((m) => window.alert(m)))('Failed to delete student', 'error');
         }
       }}
       onAddStudent={onAddStudent}

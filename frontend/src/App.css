@@ -422,6 +422,110 @@
   color: #b91c1c;
 }
 
+/* Floating toast (top-right) for success / info / error */
+.app-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 280px;
+  max-width: 480px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  box-shadow: 0 18px 40px rgba(6,22,18,0.12);
+  display: block;
+  border: 1px solid rgba(0,0,0,0.06);
+  transform: translateY(-6px);
+  animation: app-toast-in 260ms cubic-bezier(.2,.9,.2,1) forwards;
+  overflow: hidden;
+}
+
+.app-toast.info {
+  background: linear-gradient(90deg, rgba(241,248,255,0.98), rgba(240,250,255,0.96));
+  color: #0f172a;
+  border-color: rgba(59,130,246,0.12);
+}
+.app-toast.success {
+  background: linear-gradient(90deg, #05372d 0%, #0b6b4a 100%);
+  color: #fff;
+  border-color: rgba(2,48,33,0.12);
+}
+
+.app-toast-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+}
+
+.app-toast-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  color: #e6ffed;
+}
+
+.app-toast-body { flex: 1 1 auto; min-width: 0; }
+.app-toast-msg { font-weight: 700; font-size: 0.96rem; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.app-toast-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.9);
+  font-weight: 700;
+  font-size: 18px;
+  padding: 6px 8px;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.app-toast-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  transform-origin: left center;
+  animation-name: app-toast-progress-bar;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes app-toast-progress-bar {
+  from { transform: scaleX(1); opacity: 1; }
+  to { transform: scaleX(0); opacity: 0.6; }
+}
+.app-toast.error {
+  /* Dark red error toast for strong visibility */
+  background: linear-gradient(90deg, #7f1d1d 0%, #b91c1c 100%);
+  color: #fff;
+  border-color: rgba(0,0,0,0.12);
+}
+
+.app-toast.error .app-toast-icon {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.app-toast.error .app-toast-close {
+  color: rgba(255,255,255,0.95);
+}
+
+.app-toast.error .app-toast-progress {
+  background: linear-gradient(90deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+}
+
+@keyframes app-toast-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @media (max-width: 960px) {
   .app-menu-btn {
     display: inline-flex;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { fetchSections, createSection, fetchSyllabi, updateSection, deleteSection, fetchStudents, fetchFaculty } from '../api';
+import ConfirmDialog from './ConfirmDialog';
 import './AdminList.css';
 import './Sections.css';
 
@@ -7,15 +8,18 @@ export default function Sections({ showMessage }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ name: '', courseCode: '', faculty: '', students: [] });
+  const [showAddModal, setShowAddModal] = useState(false);
   const [syllabi, setSyllabi] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', courseCode: '', faculty: '', students: [] });
+  const [showEditModal, setShowEditModal] = useState(false);
   const [facultyList, setFacultyList] = useState([]);
   const [studentsModalOpen, setStudentsModalOpen] = useState(false);
   const [modalForEdit, setModalForEdit] = useState(false);
   const [studentSearch, setStudentSearch] = useState('');
   const [studentResults, setStudentResults] = useState([]);
   const [modalLoading, setModalLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,6 +65,7 @@ export default function Sections({ showMessage }) {
       await createSection(body);
       (showMessage || alert)('Section created', 'success');
       setForm({ name: '', courseCode: '', faculty: '', students: [] });
+      setShowAddModal(false);
       load();
     } catch (err) {
       (showMessage || alert)(err.message || 'Create failed', 'error');
@@ -68,7 +73,6 @@ export default function Sections({ showMessage }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this section?')) return;
     try {
       await deleteSection(id);
       (showMessage || alert)('Deleted', 'success');
@@ -81,11 +85,13 @@ export default function Sections({ showMessage }) {
   const startEdit = (s) => {
     setEditingId(s._id);
     setEditForm({ name: s.name || '', courseCode: s.courseCode || '', faculty: s.faculty ? (s.faculty._id || '') : '', students: (s.students || []).map(st => (st && (st._id || st.studentId)) || st).map(String) });
+    setShowEditModal(true);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditForm({ name: '', courseCode: '', faculty: '', students: [] });
+    setShowEditModal(false);
   };
 
   const saveEdit = async (e) => {
@@ -162,6 +168,18 @@ export default function Sections({ showMessage }) {
     return acc;
   }, {});
 
+  useEffect(() => {
+    if (!showAddModal && !showEditModal) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setShowAddModal(false);
+      if (e.key === 'Escape') setShowEditModal(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showAddModal, showEditModal]);
+
   return (
     <div className="admins-page">
       <header className="admins-hero">
@@ -180,41 +198,9 @@ export default function Sections({ showMessage }) {
       </header>
       <section className="admins-panel">
         <div className="admins-panel-inner">
-          <form onSubmit={submit} className="sections-form">
-            <input className="sections-input" placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
-            <select className="sections-input" value={form.courseCode} onChange={e=>setForm({...form,courseCode:e.target.value})}>
-              <option value="">Select course</option>
-              {syllabi.map(s => (
-                <option key={s._id} value={s.courseCode || s.title}>{s.title}{s.courseCode ? ` (${s.courseCode})` : ''}</option>
-              ))}
-            </select>
-            <select className="sections-input" value={form.faculty || ''} onChange={e=>setForm({...form,faculty:e.target.value})}>
-              <option value="">Select adviser</option>
-              {Object.keys(groupedFaculty).map(title => (
-                <optgroup key={title} label={title}>
-                  {groupedFaculty[title].map(f => (
-                    <option key={f._id} value={f._id}>{f.firstName} {f.lastName}{f.title ? ` ({f.title})` : ''}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-
-            <div className="student-select">
-              <button type="button" className="admins-btn" onClick={()=>openStudentsModal(false)}>Select students…</button>
-              <div className="selected-summary">
-                {Array.isArray(form.students) && form.students.length > 0 ? (
-                  <span>Selected: {form.students.map(id => {
-                    const found = studentResults.find(s => String(s._id) === String(id));
-                    return found ? (found.studentId || found._id) : id;
-                  }).join(', ')}</span>
-                ) : (<span>No students</span>)}
-              </div>
-            </div>
-
-            <div className="sections-actions">
-              <button type="submit" className="admins-btn admins-btn--primary">Create</button>
-            </div>
-          </form>
+          <button type="button" className="admins-btn admins-btn--primary" onClick={() => setShowAddModal(true)}>
+            Add Section
+          </button>
         </div>
 
         <div>
@@ -234,67 +220,47 @@ export default function Sections({ showMessage }) {
               <div className="sections-list">
                 {rows.map(s => (
                   <article key={s._id} className="section-card">
-                    {editingId === s._id ? (
-                      <form onSubmit={saveEdit} className="sections-edit-form">
-                        <input className="sections-input" placeholder="Name" value={editForm.name} onChange={e=>setEditForm({...editForm,name:e.target.value})} />
-                        <select className="sections-input" value={editForm.courseCode} onChange={e=>setEditForm({...editForm,courseCode:e.target.value})}>
-                          <option value="">Select course</option>
-                          {syllabi.map(ss => (
-                            <option key={ss._id} value={ss.courseCode || ss.title}>{ss.title}{ss.courseCode ? ` (${ss.courseCode})` : ''}</option>
-                          ))}
-                        </select>
-                        <select className="sections-input" value={editForm.faculty || ''} onChange={e=>setEditForm({...editForm,faculty:e.target.value})}>
-                          <option value="">Select adviser</option>
-                          {Object.keys(groupedFaculty).map(title => (
-                            <optgroup key={title} label={title}>
-                              {groupedFaculty[title].map(f => (
-                                <option key={f._id} value={f._id}>{f.firstName} {f.lastName}{f.title ? ` ({f.title})` : ''}</option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-
-                        <div className="student-select">
-                          <button type="button" className="admins-btn" onClick={()=>openStudentsModal(true)}>Select students…</button>
-                          <div className="selected-summary">
-                            {Array.isArray(editForm.students) && editForm.students.length > 0 ? (
-                              <span>Selected: {editForm.students.join(', ')}</span>
-                            ) : (<span>No students</span>)}
+                    <>
+                      <div className="section-card-main">
+                        <h3 className="section-card-title">
+                          {s.name} {s.courseCode ? <small>{s.courseCode}</small> : null}
+                        </h3>
+                        <div className="section-card-meta-wrap">
+                          <div className="section-card-meta">
+                            <span className="section-card-meta-label">Adviser</span>
+                            <span className="section-card-meta-value">
+                              {s.faculty ? `${s.faculty.firstName || ''} ${s.faculty.lastName || ''}` : 'Not assigned'}
+                            </span>
+                          </div>
+                          <div className="section-card-meta">
+                            <span className="section-card-meta-label">Students</span>
+                            <span className="section-card-meta-value">
+                              {(s.students || []).length > 0
+                                ? (s.students || []).map(st => st.studentId || st._id).join(', ')
+                                : 'No students'}
+                            </span>
                           </div>
                         </div>
-
-                        <div className="sections-actions">
-                          <button type="submit" className="admins-btn admins-btn--primary">Save</button>
-                          <button type="button" className="admins-btn" onClick={cancelEdit}>Cancel</button>
+                      </div>
+                      <div className="section-card-actions">
+                        <div className="app-action-buttons">
+                          <button type="button" className="app-action-btn" title="Edit" aria-label="Edit section" onClick={()=>startEdit(s)}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                            </svg>
+                          </button>
+                          <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete section" onClick={()=>setConfirmDelete({ id: s._id, label: s.name || 'this section' })}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6M14 11v6" />
+                              <path d="M9 6V4h6v2" />
+                            </svg>
+                          </button>
                         </div>
-                      </form>
-                    ) : (
-                      <>
-                        <div className="section-card-main">
-                          <h3 className="section-card-title">{s.name} {s.courseCode ? <small>({s.courseCode})</small> : null}</h3>
-                          <div className="section-card-meta">Faculty: {s.faculty ? `${s.faculty.firstName || ''} ${s.faculty.lastName || ''}` : '—'}</div>
-                          <div className="section-card-meta">Students: {(s.students || []).map(st => st.studentId || st._id).join(', ')}</div>
-                        </div>
-                        <div className="section-card-actions">
-                          <div className="app-action-buttons">
-                            <button type="button" className="app-action-btn" title="Edit" aria-label="Edit section" onClick={()=>startEdit(s)}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                              </svg>
-                            </button>
-                            <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete section" onClick={()=>handleDelete(s._id)}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6l-1 14H6L5 6" />
-                                <path d="M10 11v6M14 11v6" />
-                                <path d="M9 6V4h6v2" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                      </div>
+                    </>
                   </article>
                 ))}
               </div>
@@ -302,6 +268,123 @@ export default function Sections({ showMessage }) {
           )}
         </div>
       </section>
+      {showAddModal && (
+        <div className="sections-add-modal-backdrop" role="presentation" onClick={() => setShowAddModal(false)}>
+          <div className="sections-add-modal" role="dialog" aria-modal="true" aria-label="Add section" onClick={(e) => e.stopPropagation()}>
+            <div className="sections-add-modal-head">
+              <h2 className="sections-add-modal-title">Add Section</h2>
+              <button type="button" className="sections-add-modal-close" aria-label="Close add section form" onClick={() => setShowAddModal(false)}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={submit} className="sections-form">
+              <div className="sections-modal-grid">
+                <div className="sections-modal-field">
+                  <label htmlFor="section-name">Section name</label>
+                  <input id="section-name" className="sections-input" placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+              </div>
+                <div className="sections-modal-field">
+                  <label htmlFor="section-course">Course</label>
+                  <select id="section-course" className="sections-input" value={form.courseCode} onChange={e=>setForm({...form,courseCode:e.target.value})}>
+                    <option value="">Select course</option>
+                    {syllabi.map(s => (
+                      <option key={s._id} value={s.courseCode || s.title}>{s.title}{s.courseCode ? ` (${s.courseCode})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sections-modal-field">
+                  <label htmlFor="section-faculty">Adviser</label>
+                  <select id="section-faculty" className="sections-input" value={form.faculty || ''} onChange={e=>setForm({...form,faculty:e.target.value})}>
+                    <option value="">Select adviser</option>
+                    {Object.keys(groupedFaculty).map(title => (
+                      <optgroup key={title} label={title}>
+                        {groupedFaculty[title].map(f => (
+                          <option key={f._id} value={f._id}>{f.firstName} {f.lastName}{f.title ? ` (${f.title})` : ''}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="student-select student-select--modal">
+                  <button type="button" className="admins-btn" onClick={()=>openStudentsModal(false)}>Select students…</button>
+                  <div className="selected-summary">
+                    {Array.isArray(form.students) && form.students.length > 0 ? (
+                      <span>Selected: {form.students.map(id => {
+                        const found = studentResults.find(s => String(s._id) === String(id));
+                        return found ? (found.studentId || found._id) : id;
+                      }).join(', ')}</span>
+                    ) : (<span>No students</span>)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="sections-actions">
+                <button type="submit" className="admins-btn admins-btn--primary">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showEditModal && (
+        <div className="sections-add-modal-backdrop" role="presentation" onClick={cancelEdit}>
+          <div className="sections-add-modal" role="dialog" aria-modal="true" aria-label="Edit section" onClick={(e) => e.stopPropagation()}>
+            <div className="sections-add-modal-head">
+              <h2 className="sections-add-modal-title">Edit Section</h2>
+              <button type="button" className="sections-add-modal-close" aria-label="Close edit section form" onClick={cancelEdit}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={saveEdit} className="sections-form">
+              <div className="sections-modal-grid">
+                <div className="sections-modal-field">
+                  <label htmlFor="section-edit-name">Section name</label>
+                  <input id="section-edit-name" className="sections-input" placeholder="Name" value={editForm.name} onChange={e=>setEditForm({...editForm,name:e.target.value})} />
+                </div>
+                <div className="sections-modal-field">
+                  <label htmlFor="section-edit-course">Course</label>
+                  <select id="section-edit-course" className="sections-input" value={editForm.courseCode} onChange={e=>setEditForm({...editForm,courseCode:e.target.value})}>
+                    <option value="">Select course</option>
+                    {syllabi.map(ss => (
+                      <option key={ss._id} value={ss.courseCode || ss.title}>{ss.title}{ss.courseCode ? ` (${ss.courseCode})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="sections-modal-field">
+                  <label htmlFor="section-edit-faculty">Adviser</label>
+                  <select id="section-edit-faculty" className="sections-input" value={editForm.faculty || ''} onChange={e=>setEditForm({...editForm,faculty:e.target.value})}>
+                    <option value="">Select adviser</option>
+                    {Object.keys(groupedFaculty).map(title => (
+                      <optgroup key={title} label={title}>
+                        {groupedFaculty[title].map(f => (
+                          <option key={f._id} value={f._id}>{f.firstName} {f.lastName}{f.title ? ` (${f.title})` : ''}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="student-select student-select--modal">
+                  <button type="button" className="admins-btn" onClick={()=>openStudentsModal(true)}>Select students…</button>
+                  <div className="selected-summary">
+                    {Array.isArray(editForm.students) && editForm.students.length > 0 ? (
+                      <span>Selected: {editForm.students.map(id => {
+                        const found = studentResults.find(s => String(s._id) === String(id));
+                        return found ? (found.studentId || found._id) : id;
+                      }).join(', ')}</span>
+                    ) : (<span>No students</span>)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="sections-actions">
+                <button type="submit" className="admins-btn admins-btn--primary">Save changes</button>
+                <button type="button" className="admins-btn" onClick={cancelEdit}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {studentsModalOpen && (
         <div className="modal-backdrop" onClick={closeStudentsModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
@@ -342,6 +425,18 @@ export default function Sections({ showMessage }) {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete section?"
+        message={`Delete ${confirmDelete ? confirmDelete.label : 'this section'}? This action cannot be undone.`}
+        confirmText="Delete"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={async () => {
+          const id = confirmDelete && confirmDelete.id;
+          setConfirmDelete(null);
+          if (id) await handleDelete(id);
+        }}
+      />
     </div>
   );
 }

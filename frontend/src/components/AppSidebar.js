@@ -81,7 +81,6 @@ function AppSidebar({
           </div>
           <nav className="app-sidebar-nav">
             {navBtn('home', 'Dashboard', pathname === '/' || pathname === '/dashboard')}
-            {navBtn('profile', 'Profile', pathname === '/profile' || /^\/users\/[^/]+$/.test(pathname))}
             {navBtn('syllabus', 'Syllabus', pathname === '/syllabus')}
             {navBtn('events', 'Events', pathname === '/events')}
             {navBtn('sections', 'Sections', pathname === '/sections')}

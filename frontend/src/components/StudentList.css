@@ -462,8 +462,60 @@
   font-weight: 700;
 }
 
+/* Delete confirmation modal */
+.student-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.student-confirm-modal {
+  width: min(460px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.24);
+  padding: 16px 16px 14px;
+}
+
+.student-confirm-head {
+  margin-bottom: 8px;
+}
+
+.student-confirm-title {
+  margin: 0;
+  font-size: 1.04rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.student-confirm-text {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.student-confirm-text strong {
+  color: var(--text);
+}
+
+.student-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (max-width: 768px) {
   .student-list-filters-grid {
     grid-template-columns: 1fr;
+  }
+
+  .student-confirm-modal {
+    padding: 14px 12px 12px;
   }
 }

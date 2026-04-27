@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 import './App.css';
-import { createStudent, fetchStudent, updateStudent, loginAuth, registerAuth } from './api';
+import { createStudent, fetchStudent, updateStudent, deleteStudent, loginAuth, registerAuth } from './api';
 import Departments from './components/Departments';
 import { AccessProvider } from './context/AccessContext';
 import StudentForm from './components/StudentForm';
 import Spinner from './components/Spinner';
 import StudentHome from './components/StudentHome';
 import AdminHome from './components/AdminHome';
+import StudentProfile from './components/StudentProfile';
 import Login from './components/Login';
 import Register from './components/Register';
 import AppSidebar from './components/AppSidebar';
@@ -117,6 +118,11 @@ function App() {
   const [view, setView] = useState('list'); // list | add | profile
   // Prevent navigating away from profile while editing
   const profileEditLockRef = useRef(false);
+  const [profileEditRequested, setProfileEditRequested] = useState(false);
+
+  const setProfileEditing = useCallback((isEditing) => {
+    profileEditLockRef.current = !!isEditing;
+  }, []);
 
   const setViewTracked = (v) => {
     // while a profile edit lock is active, don't switch away from the profile view
@@ -427,10 +433,10 @@ function App() {
         // dynamic user id: support /users/:id (ignore /edit suffix)
         const parts = p.split('/'); // ['', 'users', ':id', 'edit' (optional)]
         const id = parts[2];
-        const isEdit = (location && location.state && location.state.edit);
+        const isEdit = Boolean(parts[3] && parts[3] === 'edit');
         if (id) {
-          // always open the profile view (do not enter edit mode from URL)
-          openProfile(id, !!isEdit);
+          setProfileEditRequested(!!isEdit);
+          openProfile(id, false);
           setViewTracked('profile');
         }
       
@@ -654,27 +660,6 @@ function App() {
                 <AdminHome onOpenProfile={openProfileFromHome} onAddStudent={() => setViewTracked('add')} onOpenDepartments={() => setViewTracked('departments')} currentUser={user} />
               ) : (
                 <StudentHome
-                  onOpenProfile={openProfileFromHome}
-                  onGoProfile={async () => {
-                    if (auth && auth.profile && (auth.profile._id || auth.profile.studentId)) {
-                      const id = auth.profile._id || auth.profile.studentId;
-                      navigate(`/users/${id}`);
-                      return;
-                    }
-                    if (auth && typeof auth.refreshProfile === 'function') {
-                      try {
-                        const p = await auth.refreshProfile();
-                        if (p && (p._id || p.studentId)) {
-                          const id = p._id || p.studentId;
-                          navigate(`/users/${id}`);
-                          return;
-                        }
-                      } catch (e) {
-                        // fallthrough to dashboard
-                      }
-                    }
-                    navigate('/dashboard');
-                  }}
                   refreshKey={homeRefreshKey}
                   profile={auth && auth.profile}
                 />
@@ -728,33 +713,55 @@ function App() {
             )}
 
             {view === 'profile' && selected && (
-              <div style={{ padding: '1rem' }}>
-                <StudentForm
-                  initial={selected}
-                  allowSkills={!access.isAdmin}
-                  onSubmit={async (payload) => {
-                    try {
-                      await updateStudent(selected._id, payload);
-                      // refresh list and navigate back to users list
-                      window.dispatchEvent(new Event('students:reload'));
-                      setSelected(null);
-                      setViewTracked('list');
-                      try { navigate('/users'); } catch (e) { if (typeof window !== 'undefined') window.history.pushState({}, '', '/users'); }
-                      showMessage('Student updated', 'success');
-                    } catch (err) {
-                      console.error('Edit save failed', err);
-                      showMessage('Failed to update student: ' + (err.message || ''), 'error');
-                      throw err;
-                    }
-                  }}
-                  onCancel={() => {
+              <StudentProfile
+                student={selected}
+                currentUser={user}
+                initialEditing={!!profileEditRequested}
+                onEditingChange={(isEditing) => {
+                  setProfileEditing(!!isEditing);
+                  if (!isEditing) setProfileEditRequested(false);
+                  // If user is on /users/:id/edit, normalize back to /users/:id
+                  // once editing closes to prevent re-opening the modal.
+                  if (!isEditing && pathname && pathname.endsWith('/edit') && selected && selected._id) {
+                    try { navigate(`/users/${selected._id}`, { replace: true }); } catch (e) { /* ignore */ }
+                  }
+                }}
+                onBack={() => {
+                  setProfileEditRequested(false);
+                  setSelected(null);
+                  setViewTracked('list');
+                  try { navigate('/users'); } catch (e) { if (typeof window !== 'undefined') window.history.pushState({}, '', '/users'); }
+                }}
+                onUpdate={async (id, payload) => {
+                  try {
+                    await updateStudent(id, payload);
+                    window.dispatchEvent(new Event('students:reload'));
+                    showMessage('Student updated', 'success');
+                    setProfileEditRequested(false);
+                    // refresh profile data in-place
+                    await openProfile(id, false, true);
+                  } catch (err) {
+                    console.error('Edit save failed', err);
+                    showMessage('Failed to update student: ' + (err.message || ''), 'error');
+                    throw err;
+                  }
+                }}
+                onDelete={async (id) => {
+                  try {
+                    await deleteStudent(id);
+                    window.dispatchEvent(new Event('students:reload'));
+                    showMessage('Student deleted', 'success');
+                    setProfileEditRequested(false);
                     setSelected(null);
                     setViewTracked('list');
                     try { navigate('/users'); } catch (e) { if (typeof window !== 'undefined') window.history.pushState({}, '', '/users'); }
-                  }}
-                  showMessage={showMessage}
-                />
-              </div>
+                  } catch (err) {
+                    console.error('Delete failed', err);
+                    showMessage('Failed to delete student: ' + (err.message || ''), 'error');
+                    throw err;
+                  }
+                }}
+              />
             )}
 
             {access.isAdmin && view === 'account' && (

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { fetchReports, createReport, updateReport, deleteReport, fetchStudents, fetchFaculty } from '../api';
+import ConfirmDialog from './ConfirmDialog';
 import './AdminList.css';
 import './Reports.css';
 
@@ -7,6 +8,7 @@ export default function Reports({ showMessage }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ title: '', visibility: 'admin', data: '', allStudents: false, studentRecipients: [], allFaculty: false, facultyRecipients: [] });
+  const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [studentsList, setStudentsList] = useState([]);
   const [facultyList, setFacultyList] = useState([]);
@@ -14,6 +16,7 @@ export default function Reports({ showMessage }) {
   const [studentOpen, setStudentOpen] = useState(false);
   const [facultyQuery, setFacultyQuery] = useState('');
   const [facultyOpen, setFacultyOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const studentRef = useRef(null);
   const facultyRef = useRef(null);
 
@@ -34,6 +37,20 @@ export default function Reports({ showMessage }) {
       return label.includes(q);
     });
   }, [facultyList, facultyQuery]);
+
+  const reportStats = useMemo(() => {
+    const list = rows || [];
+    let allAudience = 0;
+    let studentAudience = 0;
+    let adminAudience = 0;
+    list.forEach((r) => {
+      const v = String(r && r.visibility ? r.visibility : 'admin').toLowerCase();
+      if (v === 'all') allAudience += 1;
+      else if (v === 'student') studentAudience += 1;
+      else adminAudience += 1;
+    });
+    return { total: list.length, allAudience, studentAudience, adminAudience };
+  }, [rows]);
 
   const toggleStudentRecipient = useCallback((id) => {
     setForm(f => {
@@ -145,6 +162,7 @@ export default function Reports({ showMessage }) {
         (showMessage || alert)('Report created', 'success');
       }
       setForm({ title: '', visibility: 'admin', data: '', allStudents: false, studentRecipients: [], allFaculty: false, facultyRecipients: [] });
+      setShowAddModal(false);
       load();
     } catch (err) {
       (showMessage || alert)(err.message || 'Create failed', 'error');
@@ -152,7 +170,6 @@ export default function Reports({ showMessage }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this report?')) return;
     try {
       await deleteReport(id);
       (showMessage || alert)('Deleted', 'success');
@@ -164,6 +181,7 @@ export default function Reports({ showMessage }) {
 
   const startEdit = (r) => {
     setEditingId(r._id);
+    setShowAddModal(true);
     setForm({
       title: r.title || '',
       visibility: r.visibility || 'admin',
@@ -178,7 +196,23 @@ export default function Reports({ showMessage }) {
   const cancelEdit = () => {
     setEditingId(null);
     setForm({ title: '', visibility: 'admin', data: '', allStudents: false, studentRecipients: [], allFaculty: false, facultyRecipients: [] });
+    setShowAddModal(false);
   };
+
+  useEffect(() => {
+    if (!showAddModal) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowAddModal(false);
+        if (studentOpen) setStudentOpen(false);
+        if (facultyOpen) setFacultyOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showAddModal, studentOpen, facultyOpen]);
 
   return (
     <div className="admins-page">
@@ -192,102 +226,27 @@ export default function Reports({ showMessage }) {
 
       <section className="admins-panel">
         <div className="admins-panel-inner">
-          <form onSubmit={submit} className="reports-form">
-            <input className="reports-input" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
-            <select className="reports-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
-              <option value="admin">Admin</option>
-              <option value="student">Student</option>
-              <option value="all">All</option>
-            </select>
-            <textarea className="reports-textarea" placeholder="Long report text" value={form.data} onChange={e=>setForm({...form,data:e.target.value})} />
-
-            <label className="reports-checkbox">
-              <input type="checkbox" checked={!!form.allStudents} onChange={e=>setForm(f=>({...f,allStudents:e.target.checked}))} />
-              <span>Send to all students</span>
-            </label>
-            <label className="reports-checkbox">
-              <input type="checkbox" checked={!!form.allFaculty} onChange={e=>setForm(f=>({...f,allFaculty:e.target.checked}))} />
-              <span>Send to all faculty</span>
-            </label>
-
-            <div className="reports-recipients">
-              <div className="reports-recipients-col">
-                <div className="reports-field-label">Specific students</div>
-                <div className="reports-multi" ref={studentRef}>
-                  <div className="reports-multi-input" onClick={() => setStudentOpen(true)}>
-                    {Array.isArray(form.studentRecipients) && form.studentRecipients.length > 0 ? (
-                      form.studentRecipients.map(id => {
-                        const s = (studentsList || []).find(x => String(x._id) === String(id));
-                        const label = s ? (s.studentId ? `${s.studentId} — ${s.firstName || ''} ${s.lastName || ''}` : s._id) : id;
-                        return (
-                          <span key={id} className="token">
-                            {label}
-                            <button type="button" className="token-remove" onClick={(e) => { e.stopPropagation(); removeStudentRecipient(String(id)); }}>×</button>
-                          </span>
-                        );
-                      })
-                    ) : (
-                      <span className="reports-placeholder">No students</span>
-                    )}
-                    <input className="reports-multi-search" value={studentQuery} onChange={e=>setStudentQuery(e.target.value)} onFocus={()=>setStudentOpen(true)} placeholder="Search students…" />
-                  </div>
-                  {studentOpen && (
-                    <div className="reports-dropdown">
-                      {filteredStudents.length === 0 ? <div className="reports-dropdown-empty">No matches</div> : (
-                        filteredStudents.slice(0,200).map(s => (
-                          <label key={s._id} className="dropdown-item">
-                            <input type="checkbox" checked={Array.isArray(form.studentRecipients) && form.studentRecipients.includes(String(s._id))} onChange={() => toggleStudentRecipient(String(s._id))} />
-                            <span className="dropdown-item-label">{s.studentId ? `${s.studentId} — ` : ''}{(s.firstName || '') + (s.lastName ? ' ' + s.lastName : '')}</span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="reports-spacer" />
-              <div className="reports-recipients-col">
-                <div className="reports-field-label">Specific faculty</div>
-                <div className="reports-multi" ref={facultyRef}>
-                  <div className="reports-multi-input" onClick={() => setFacultyOpen(true)}>
-                    {Array.isArray(form.facultyRecipients) && form.facultyRecipients.length > 0 ? (
-                      form.facultyRecipients.map(id => {
-                        const f = (facultyList || []).find(x => String(x._id) === String(id));
-                        const label = f ? (f.employeeId ? `${f.employeeId} — ${f.firstName || ''} ${f.lastName || ''}` : f._id) : id;
-                        return (
-                          <span key={id} className="token">
-                            {label}
-                            <button type="button" className="token-remove" onClick={(e) => { e.stopPropagation(); removeFacultyRecipient(String(id)); }}>×</button>
-                          </span>
-                        );
-                      })
-                    ) : (
-                      <span className="reports-placeholder">No faculty</span>
-                    )}
-                    <input className="reports-multi-search" value={facultyQuery} onChange={e=>setFacultyQuery(e.target.value)} onFocus={()=>setFacultyOpen(true)} placeholder="Search faculty…" />
-                  </div>
-                  {facultyOpen && (
-                    <div className="reports-dropdown">
-                      {filteredFaculty.length === 0 ? <div className="reports-dropdown-empty">No matches</div> : (
-                        filteredFaculty.slice(0,200).map(f => (
-                          <label key={f._id} className="dropdown-item">
-                            <input type="checkbox" checked={Array.isArray(form.facultyRecipients) && form.facultyRecipients.includes(String(f._id))} onChange={() => toggleFacultyRecipient(String(f._id))} />
-                            <span className="dropdown-item-label">{f.employeeId ? `${f.employeeId} — ` : ''}{(f.firstName || '') + (f.lastName ? ' ' + f.lastName : '')}</span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="reports-actions">
-              <button type="submit" className="admins-btn admins-btn--primary">{editingId ? 'Update' : 'Create'}</button>
-              <button type="button" className="admins-btn" onClick={cancelEdit}>Clear</button>
-            </div>
-          </form>
+          <button type="button" className="admins-btn admins-btn--primary" onClick={() => setShowAddModal(true)}>
+            Add Report
+          </button>
         </div>
+
+        {!loading && rows.length > 0 && (
+          <div className="reports-summary" role="status" aria-label="Report summary">
+            <span className="reports-summary-pill">
+              <strong>{reportStats.total}</strong> total
+            </span>
+            <span className="reports-summary-pill">
+              <strong>{reportStats.allAudience}</strong> all audience
+            </span>
+            <span className="reports-summary-pill">
+              <strong>{reportStats.studentAudience}</strong> student only
+            </span>
+            <span className="reports-summary-pill">
+              <strong>{reportStats.adminAudience}</strong> admin/faculty
+            </span>
+          </div>
+        )}
 
         <div className="reports-list-wrap">
           {loading ? <div className="muted">Loading…</div> : (
@@ -311,26 +270,41 @@ export default function Reports({ showMessage }) {
                     ) : (
                       <>
                         <div className="report-card-main">
-                          <h3 className="report-card-title">{r.title} <small>Targets: {r.allStudents ? 'All students' : (r.studentRecipients && r.studentRecipients.length ? `Students (${r.studentRecipients.length})` : '')} {r.allFaculty ? ' • All faculty' : (r.facultyRecipients && r.facultyRecipients.length ? ` • Faculty (${r.facultyRecipients.length})` : '')}</small></h3>
-                          <pre className="report-card-pre">{r.data || ''}</pre>
-                          <div className="report-card-actions">
-                            <div className="app-action-buttons">
-                              <button type="button" className="app-action-btn" title="Edit" aria-label="Edit report" onClick={()=>startEdit(r)}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                  <path d="M12 20h9" />
-                                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                                </svg>
-                              </button>
-                              <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete report" onClick={()=>handleDelete(r._id)}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6l-1 14H6L5 6" />
-                                  <path d="M10 11v6M14 11v6" />
-                                  <path d="M9 6V4h6v2" />
-                                </svg>
-                              </button>
+                          <div className="report-card-head">
+                            <h3 className="report-card-title">{r.title}</h3>
+                            <div className="report-card-actions">
+                              <div className="app-action-buttons">
+                                <button type="button" className="app-action-btn" title="Edit" aria-label="Edit report" onClick={()=>startEdit(r)}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                    <path d="M12 20h9" />
+                                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                                  </svg>
+                                </button>
+                                <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete report" onClick={()=>setConfirmDelete({ id: r._id, label: r.title || 'this report' })}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14H6L5 6" />
+                                    <path d="M10 11v6M14 11v6" />
+                                    <path d="M9 6V4h6v2" />
+                                  </svg>
+                                </button>
+                              </div>
                             </div>
                           </div>
+                          <div className="report-card-targets">
+                            <span className="report-pill report-pill--visibility">{r.visibility || 'admin'}</span>
+                            {r.allStudents ? (
+                              <span className="report-pill">All students</span>
+                            ) : (r.studentRecipients && r.studentRecipients.length ? (
+                              <span className="report-pill">Students ({r.studentRecipients.length})</span>
+                            ) : null)}
+                            {r.allFaculty ? (
+                              <span className="report-pill">All faculty</span>
+                            ) : (r.facultyRecipients && r.facultyRecipients.length ? (
+                              <span className="report-pill">Faculty ({r.facultyRecipients.length})</span>
+                            ) : null)}
+                          </div>
+                          <pre className="report-card-pre">{r.data || ''}</pre>
                         </div>
                       </>
                     )}
@@ -341,6 +315,128 @@ export default function Reports({ showMessage }) {
           )}
         </div>
       </section>
+      {showAddModal && (
+        <div className="reports-modal-backdrop" role="presentation" onClick={cancelEdit}>
+          <div className="reports-modal" role="dialog" aria-modal="true" aria-label={editingId ? 'Edit report' : 'Add report'} onClick={(e) => e.stopPropagation()}>
+            <div className="reports-modal-head">
+              <h2 className="reports-modal-title">{editingId ? 'Edit Report' : 'Add Report'}</h2>
+              <button type="button" className="reports-modal-close" aria-label="Close report form" onClick={cancelEdit}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={submit} className="reports-form">
+              <div className="reports-top-grid">
+                <input className="reports-input" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
+                <select className="reports-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
+                  <option value="admin">Admin</option>
+                  <option value="student">Student</option>
+                  <option value="all">All</option>
+                </select>
+                <textarea className="reports-textarea" placeholder="Write your report message..." value={form.data} onChange={e=>setForm({...form,data:e.target.value})} />
+                <div className="reports-check-group">
+                  <label className="reports-checkbox reports-checkbox--card">
+                    <input type="checkbox" checked={!!form.allStudents} onChange={e=>setForm(f=>({...f,allStudents:e.target.checked}))} />
+                    <span>Send to all students</span>
+                  </label>
+                  <label className="reports-checkbox reports-checkbox--card">
+                    <input type="checkbox" checked={!!form.allFaculty} onChange={e=>setForm(f=>({...f,allFaculty:e.target.checked}))} />
+                    <span>Send to all faculty</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="reports-recipients">
+                <div className="reports-recipients-col">
+                  <div className="reports-field-label">Specific students</div>
+                  <div className="reports-multi" ref={studentRef}>
+                    <div className="reports-multi-input" onClick={() => setStudentOpen(true)}>
+                      {Array.isArray(form.studentRecipients) && form.studentRecipients.length > 0 ? (
+                        form.studentRecipients.map(id => {
+                          const s = (studentsList || []).find(x => String(x._id) === String(id));
+                          const label = s ? (s.studentId ? `${s.studentId} — ${s.firstName || ''} ${s.lastName || ''}` : s._id) : id;
+                          return (
+                            <span key={id} className="token">
+                              {label}
+                              <button type="button" className="token-remove" onClick={(e) => { e.stopPropagation(); removeStudentRecipient(String(id)); }}>×</button>
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="reports-placeholder">No students</span>
+                      )}
+                      <input className="reports-multi-search" value={studentQuery} onChange={e=>setStudentQuery(e.target.value)} onFocus={()=>setStudentOpen(true)} placeholder="Search students…" />
+                    </div>
+                    {studentOpen && (
+                      <div className="reports-dropdown">
+                        {filteredStudents.length === 0 ? <div className="reports-dropdown-empty">No matches</div> : (
+                          filteredStudents.slice(0,200).map(s => (
+                            <label key={s._id} className="dropdown-item">
+                              <input type="checkbox" checked={Array.isArray(form.studentRecipients) && form.studentRecipients.includes(String(s._id))} onChange={() => toggleStudentRecipient(String(s._id))} />
+                              <span className="dropdown-item-label">{s.studentId ? `${s.studentId} — ` : ''}{(s.firstName || '') + (s.lastName ? ' ' + s.lastName : '')}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="reports-spacer" />
+                <div className="reports-recipients-col">
+                  <div className="reports-field-label">Specific faculty</div>
+                  <div className="reports-multi" ref={facultyRef}>
+                    <div className="reports-multi-input" onClick={() => setFacultyOpen(true)}>
+                      {Array.isArray(form.facultyRecipients) && form.facultyRecipients.length > 0 ? (
+                        form.facultyRecipients.map(id => {
+                          const f = (facultyList || []).find(x => String(x._id) === String(id));
+                          const label = f ? (f.employeeId ? `${f.employeeId} — ${f.firstName || ''} ${f.lastName || ''}` : f._id) : id;
+                          return (
+                            <span key={id} className="token">
+                              {label}
+                              <button type="button" className="token-remove" onClick={(e) => { e.stopPropagation(); removeFacultyRecipient(String(id)); }}>×</button>
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="reports-placeholder">No faculty</span>
+                      )}
+                      <input className="reports-multi-search" value={facultyQuery} onChange={e=>setFacultyQuery(e.target.value)} onFocus={()=>setFacultyOpen(true)} placeholder="Search faculty…" />
+                    </div>
+                    {facultyOpen && (
+                      <div className="reports-dropdown">
+                        {filteredFaculty.length === 0 ? <div className="reports-dropdown-empty">No matches</div> : (
+                          filteredFaculty.slice(0,200).map(f => (
+                            <label key={f._id} className="dropdown-item">
+                              <input type="checkbox" checked={Array.isArray(form.facultyRecipients) && form.facultyRecipients.includes(String(f._id))} onChange={() => toggleFacultyRecipient(String(f._id))} />
+                              <span className="dropdown-item-label">{f.employeeId ? `${f.employeeId} — ` : ''}{(f.firstName || '') + (f.lastName ? ' ' + f.lastName : '')}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="reports-actions">
+                <button type="submit" className="admins-btn admins-btn--primary">{editingId ? 'Update' : 'Create'}</button>
+                <button type="button" className="admins-btn" onClick={cancelEdit}>Clear</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete report?"
+        message={`Delete ${confirmDelete ? confirmDelete.label : 'this report'}? This action cannot be undone.`}
+        confirmText="Delete"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={async () => {
+          const id = confirmDelete && confirmDelete.id;
+          setConfirmDelete(null);
+          if (id) await handleDelete(id);
+        }}
+      />
     </div>
   );
 }

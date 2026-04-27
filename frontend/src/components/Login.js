@@ -211,22 +211,46 @@ export default function Login({ onLogin, onSwitchToRegister, onForgotPassword })
         </div>
       </div>
       {showForgotModal && (
-        <div className="forgot-modal-overlay" role="dialog" aria-modal="true">
-          <div className="forgot-modal" ref={forgotRef}>
-            <button type="button" className="forgot-modal-close" onClick={() => setShowForgotModal(false)} aria-label="Close">×</button>
-            <h2>Student Profiling Account Assistance</h2>
-            <p>Having trouble signing in? We're here to help you recover access to your account.</p>
-            <p>If you are sure that your login credentials are correct but you still receive an “Invalid login credential” message, your account may require administrator verification.</p>
-            <p>Please contact the system administrator for assistance.</p>
-            <p>When contacting the administrator, kindly provide the following information:</p>
-            <ul>
-              <li>Your Full Name</li>
-              <li>Your Student ID</li>
-              <li>A brief description of the issue</li>
-              <li>A photo of your Student ID (if available)</li>
-            </ul>
-            <p>You may use the Facebook link below to reach the administrator team quickly. If you do not use Facebook, you may also ask a faculty member on site to help escalate your request to the administrator.</p>
-            <p><a href="https://www.youtube.com/watch?v=Aq5WXmQQooo" target="_blank" rel="noopener noreferrer" className="forgot-modal-fb">Contact via Facebook</a></p>
+        <div className="forgot-modal-overlay" role="presentation">
+          <div className="forgot-modal" ref={forgotRef} role="dialog" aria-modal="true" aria-label="Forgot password help">
+            <div className="forgot-modal-head">
+              <h2 className="forgot-modal-title">Student Profiling Account Assistance</h2>
+              <button type="button" className="forgot-modal-close" onClick={() => setShowForgotModal(false)} aria-label="Close">×</button>
+            </div>
+
+            <div className="forgot-modal-body">
+              <p className="forgot-modal-lead">Having trouble signing in? Here’s the fastest way to recover access.</p>
+              <p>If you’re sure your credentials are correct but you still receive an <strong>“Invalid login credential”</strong> message, your account may require administrator verification.</p>
+              <p className="forgot-modal-muted">Please contact the system administrator for assistance.</p>
+
+              <div className="forgot-modal-card">
+                <div className="forgot-modal-card-title">Include these details</div>
+                <ul className="forgot-modal-list">
+                  <li>Your full name</li>
+                  <li>Your student ID</li>
+                  <li>A brief description of the issue</li>
+                  <li>A photo of your student ID (if available)</li>
+                </ul>
+              </div>
+
+              <p className="forgot-modal-footnote">
+                You may use the Facebook link below to reach the administrator team quickly. If you don’t use Facebook, you may also ask a faculty member on-site to help escalate your request.
+              </p>
+            </div>
+
+            <div className="forgot-modal-actions">
+              <a
+                href="https://www.youtube.com/watch?v=Aq5WXmQQooo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="forgot-modal-fb"
+              >
+                Contact via Facebook
+              </a>
+              <button type="button" className="admins-btn" onClick={() => setShowForgotModal(false)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

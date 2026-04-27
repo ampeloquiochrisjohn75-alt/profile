@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { fetchEvents, createEvent, updateEvent, deleteEvent, fetchDepartments, fetchCourses } from '../api';
+import ConfirmDialog from './ConfirmDialog';
 import './AdminList.css';
 import './Schedules.css';
 
@@ -44,6 +45,77 @@ function monthMatrix(monthStart) {
   return weeks;
 }
 
+function easterSunday(year) {
+  // Gregorian computus
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31); // 3=March, 4=April
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function shiftDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function lastMondayOfAugust(year) {
+  const d = new Date(year, 7, 31); // Aug 31
+  while (d.getDay() !== 1) d.setDate(d.getDate() - 1);
+  return d;
+}
+
+function holidayEvent(id, title, date, holidayType = 'Regular Holiday') {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+  return {
+    _id: id,
+    title,
+    description: holidayType,
+    start,
+    end,
+    location: 'Philippines',
+    visibility: 'all',
+    isHoliday: true,
+    holidayType,
+  };
+}
+
+function philippineHolidayEvents(year) {
+  const easter = easterSunday(year);
+  const holidays = [
+    holidayEvent(`ph-${year}-new-year`, "New Year's Day", new Date(year, 0, 1)),
+    holidayEvent(`ph-${year}-edsa`, 'EDSA People Power Revolution Anniversary', new Date(year, 1, 25), 'Special Non-Working Holiday'),
+    holidayEvent(`ph-${year}-araw-ng-kagitingan`, 'Araw ng Kagitingan', new Date(year, 3, 9)),
+    holidayEvent(`ph-${year}-labor-day`, 'Labor Day', new Date(year, 4, 1)),
+    holidayEvent(`ph-${year}-independence`, 'Independence Day', new Date(year, 5, 12)),
+    holidayEvent(`ph-${year}-ninoy`, 'Ninoy Aquino Day', new Date(year, 7, 21), 'Special Non-Working Holiday'),
+    holidayEvent(`ph-${year}-national-heroes`, "National Heroes' Day", lastMondayOfAugust(year)),
+    holidayEvent(`ph-${year}-all-saints`, "All Saints' Day", new Date(year, 10, 1), 'Special Non-Working Holiday'),
+    holidayEvent(`ph-${year}-all-souls`, "All Souls' Day", new Date(year, 10, 2), 'Special Non-Working Holiday'),
+    holidayEvent(`ph-${year}-bonifacio`, 'Bonifacio Day', new Date(year, 10, 30)),
+    holidayEvent(`ph-${year}-christmas-eve`, 'Christmas Eve', new Date(year, 11, 24), 'Special Non-Working Holiday'),
+    holidayEvent(`ph-${year}-christmas`, 'Christmas Day', new Date(year, 11, 25)),
+    holidayEvent(`ph-${year}-rizal`, 'Rizal Day', new Date(year, 11, 30)),
+    holidayEvent(`ph-${year}-new-years-eve`, "New Year's Eve", new Date(year, 11, 31), 'Special Non-Working Holiday'),
+    holidayEvent(`ph-${year}-maundy-thursday`, 'Maundy Thursday', shiftDays(easter, -3)),
+    holidayEvent(`ph-${year}-good-friday`, 'Good Friday', shiftDays(easter, -2)),
+    holidayEvent(`ph-${year}-black-saturday`, 'Black Saturday', shiftDays(easter, -1), 'Special Non-Working Holiday'),
+  ];
+  return holidays;
+}
+
 export default function Schedules({ showMessage }) {
   const [monthStart, setMonthStart] = useState(() => {
     const now = new Date();
@@ -56,6 +128,8 @@ export default function Schedules({ showMessage }) {
   const [departmentsList, setDepartmentsList] = useState([]);
   const [programsList, setProgramsList] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const user = useMemo(() => {
     try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch(e) { return null; }
@@ -99,9 +173,14 @@ export default function Schedules({ showMessage }) {
     return () => { mounted = false; };
   }, []);
 
+  const holidayEvents = useMemo(() => {
+    const y = monthStart.getFullYear();
+    return [...philippineHolidayEvents(y - 1), ...philippineHolidayEvents(y), ...philippineHolidayEvents(y + 1)];
+  }, [monthStart]);
   const eventsByDay = useMemo(() => {
+    const merged = [...events, ...holidayEvents];
     const map = Object.create(null);
-    for (const e of events) {
+    for (const e of merged) {
       const s = e.start || (e.createdAt ? new Date(e.createdAt) : null);
       const t = e.end || s;
       if (!s) continue;
@@ -114,7 +193,7 @@ export default function Schedules({ showMessage }) {
       }
     }
     return map;
-  }, [events]);
+  }, [events, holidayEvents]);
 
   const weeks = useMemo(() => monthMatrix(monthStart), [monthStart]);
 
@@ -157,6 +236,7 @@ export default function Schedules({ showMessage }) {
         (showMessage || alert)('Event created', 'success');
       }
       setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] });
+      setShowEventModal(false);
       load();
     } catch (err) {
       console.error(err);
@@ -166,7 +246,6 @@ export default function Schedules({ showMessage }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this event?')) return;
     try {
       await deleteEvent(id);
       (showMessage || alert)('Deleted', 'success');
@@ -174,6 +253,24 @@ export default function Schedules({ showMessage }) {
     } catch (err) {
       (showMessage || alert)(err.message || 'Delete failed', 'error');
     }
+  };
+
+  const openCreateModal = () => {
+    if (selectedDate) {
+      setForm(f => ({
+        ...f,
+        start: f.start || `${selectedDate}T09:00`,
+        end: f.end || `${selectedDate}T10:00`,
+      }));
+    }
+    setEditingId(null);
+    setShowEventModal(true);
+  };
+
+  const closeEventModal = () => {
+    setShowEventModal(false);
+    setEditingId(null);
+    setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] });
   };
 
   return (
@@ -200,12 +297,21 @@ export default function Schedules({ showMessage }) {
             {loading ? <div className="muted">Loading…</div> : (
               <div>
                 {(selectedDate && (eventsByDay[selectedDate] || []).length) ? (
-                  (eventsByDay[selectedDate] || []).map(ev => (
+                  (eventsByDay[selectedDate] || [])
+                    .slice()
+                    .sort((a, b) => Number(Boolean(b.isHoliday)) - Number(Boolean(a.isHoliday)))
+                    .map(ev => (
                     <article key={ev._id} className="event-card">
                       <div className="event-card-main">
-                        <div className="event-card-title">{ev.title}</div>
+                        <div className="event-card-title">
+                          {ev.title}
+                          {ev.isHoliday ? <span className="event-card-badge">Holiday</span> : null}
+                        </div>
                         <div className="event-card-meta">{ev.start ? new Date(ev.start).toLocaleString() : ''} {ev.end ? `— ${new Date(ev.end).toLocaleString()}` : ''}</div>
-                        <div className="event-card-sub">{ev.location || ''} • {ev.visibility}</div>
+                        <div className="event-card-sub">
+                          {ev.location || ''} • {ev.visibility}
+                          {ev.holidayType ? ` • ${ev.holidayType}` : ''}
+                        </div>
                         {ev.departments && ev.departments.length ? (
                           <div className="event-card-list">Departments: {ev.departments.map(d => (d && (d.name || d.code)) || d).join(', ')}</div>
                         ) : null}
@@ -214,7 +320,7 @@ export default function Schedules({ showMessage }) {
                         ) : null}
                       </div>
                       <div className="event-card-actions">
-                        {isAdmin && (
+                        {isAdmin && !ev.isHoliday && (
                           <div className="app-action-buttons">
                             <button type="button" className="app-action-btn" title="Edit" aria-label="Edit event" onClick={() => {
                               setEditingId(ev._id);
@@ -228,13 +334,14 @@ export default function Schedules({ showMessage }) {
                                 departments: ev.departments ? ev.departments.map(d => (d && d._id ? d._id.toString() : d)) : [],
                                 programs: ev.programs || [],
                               });
+                              setShowEventModal(true);
                             }}>
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                                 <path d="M12 20h9" />
                                 <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                               </svg>
                             </button>
-                            <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete event" onClick={() => handleDelete(ev._id)}>
+                            <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete event" onClick={() => setConfirmDelete({ id: ev._id, label: ev.title || 'this event' })}>
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                                 <polyline points="3 6 5 6 21 6" />
                                 <path d="M19 6l-1 14H6L5 6" />
@@ -252,72 +359,13 @@ export default function Schedules({ showMessage }) {
             )}
 
             {isAdmin && (
-              <form onSubmit={create} className="event-form">
-                <div className="form-column">
-                  <div className="input-field">
-                    <label className="small-label">Event title</label>
-                    <input required className="event-input" placeholder="Enter title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
-                  </div>
-                  <div className="input-field">
-                    <label className="small-label">Description</label>
-                    <input className="event-input" placeholder="Short description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
-                  </div>
-                  <div className="input-field">
-                    <label className="small-label">Start date and time</label>
-                    <input className="event-input" type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})} />
-                  </div>
-                  <div className="input-field">
-                    <label className="small-label">End date and time</label>
-                    <input className="event-input" type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})} />
-                  </div>
-                  <div className="input-field input-field--full">
-                    <label className="small-label">Location</label>
-                    <input className="event-input" placeholder="Room, venue, or online link" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} />
-                  </div>
-
-                  <div className="multi-select-field">
-                    <label className="small-label">Target departments (hold Ctrl/Cmd to select multiple)</label>
-                    <select multiple className="event-input" value={form.departments || []} onChange={e=>{
-                      const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
-                      setForm(f=>({...f,departments:vals}));
-                    }}>
-                      <option value="">-- none --</option>
-                      {departmentsList.map(d => (
-                        <option key={d._id} value={d._id}>{d.name || d.code || d._id}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="multi-select-field">
-                    <label className="small-label">Target programs (hold Ctrl/Cmd to select multiple)</label>
-                    <select multiple className="event-input" value={form.programs || []} onChange={e=>{
-                      const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
-                      setForm(f=>({...f,programs:vals}));
-                    }}>
-                      <option value="">-- none --</option>
-                      {programsList.map(p => (
-                        <option key={p._id} value={p.courseCode}>{p.courseCode}{p.title ? ` — ${p.title}` : ''}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="input-field input-field--full">
-                    <label className="small-label">Who can see this event?</label>
-                    <select className="event-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
-                      <option value="all">All (students & faculty)</option>
-                      <option value="students">Students only</option>
-                      <option value="faculty">Faculty only</option>
-                      <option value="admins">Admins only</option>
-                    </select>
-                  </div>
-
-                  <div className="form-actions">
-                    <button type="submit" className="admins-btn admins-btn--primary">Save event</button>
-                    <button type="button" className="admins-btn" onClick={()=>{ setForm({ title: '', description: '', start: '', end: '', location: '', visibility: 'all', departments: [], programs: [] }); }}>Clear</button>
-                  </div>
-                </div>
-              </form>
+              <div className="schedule-event-actions">
+                <button type="button" className="admins-btn admins-btn--primary" onClick={openCreateModal}>
+                  Add Event
+                </button>
+              </div>
             )}
+
           </div>
 
           <div className="calendar-header">
@@ -337,10 +385,11 @@ export default function Schedules({ showMessage }) {
             {weeks.map((week) => week.map((day) => {
               const k = formatKey(day);
               const ev = eventsByDay[k] || [];
+              const hasHoliday = ev.some(item => item.isHoliday);
               const isThisMonth = day.getMonth() === monthStart.getMonth();
               const selected = selectedDate === k;
               return (
-                <button key={k} className={`calendar-day ${isThisMonth ? '' : 'calendar-day--other'} ${selected ? 'calendar-day--selected' : ''} ${ev.length ? 'calendar-day--has-events' : ''}`} onClick={() => onSelectDay(day)}>
+                <button key={k} className={`calendar-day ${isThisMonth ? '' : 'calendar-day--other'} ${selected ? 'calendar-day--selected' : ''} ${ev.length ? 'calendar-day--has-events' : ''} ${hasHoliday ? 'calendar-day--holiday' : ''}`} onClick={() => onSelectDay(day)}>
                   <div className="calendar-day-top">
                     <div className="calendar-day-num">{day.getDate()}</div>
                     <div className="calendar-day-count">{ev.length ? `${ev.length}` : ''}</div>
@@ -356,6 +405,96 @@ export default function Schedules({ showMessage }) {
           </div>
         </div>
       </section>
+
+      {isAdmin && showEventModal && (
+        <div className="schedule-modal-backdrop" role="presentation" onClick={closeEventModal}>
+          <div className="schedule-modal" role="dialog" aria-modal="true" aria-label={editingId ? 'Edit event' : 'Add event'} onClick={(e) => e.stopPropagation()}>
+            <div className="schedule-modal-head">
+              <h2 className="schedule-modal-title">{editingId ? 'Edit Event' : 'Add Event'}</h2>
+              <button type="button" className="schedule-modal-close" aria-label="Close event form" onClick={closeEventModal}>
+                ×
+              </button>
+            </div>
+            <form onSubmit={create} className="event-form">
+              <div className="form-column">
+                <div className="input-field">
+                  <label className="small-label">Event title</label>
+                  <input required className="event-input" placeholder="Enter title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
+                </div>
+                <div className="input-field">
+                  <label className="small-label">Description</label>
+                  <input className="event-input" placeholder="Short description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
+                </div>
+                <div className="input-field">
+                  <label className="small-label">Start date and time</label>
+                  <input className="event-input" type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})} />
+                </div>
+                <div className="input-field">
+                  <label className="small-label">End date and time</label>
+                  <input className="event-input" type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})} />
+                </div>
+                <div className="input-field input-field--full">
+                  <label className="small-label">Location</label>
+                  <input className="event-input" placeholder="Room, venue, or online link" value={form.location} onChange={e=>setForm({...form,location:e.target.value})} />
+                </div>
+
+                <div className="multi-select-field">
+                  <label className="small-label">Target departments (hold Ctrl/Cmd to select multiple)</label>
+                  <select multiple className="event-input" value={form.departments || []} onChange={e=>{
+                    const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
+                    setForm(f=>({...f,departments:vals}));
+                  }}>
+                    <option value="">-- none --</option>
+                    {departmentsList.map(d => (
+                      <option key={d._id} value={d._id}>{d.name || d.code || d._id}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="multi-select-field">
+                  <label className="small-label">Target programs (hold Ctrl/Cmd to select multiple)</label>
+                  <select multiple className="event-input" value={form.programs || []} onChange={e=>{
+                    const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
+                    setForm(f=>({...f,programs:vals}));
+                  }}>
+                    <option value="">-- none --</option>
+                    {programsList.map(p => (
+                      <option key={p._id} value={p.courseCode}>{p.courseCode}{p.title ? ` — ${p.title}` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-field input-field--full">
+                  <label className="small-label">Who can see this event?</label>
+                  <select className="event-input" value={form.visibility} onChange={e=>setForm({...form,visibility:e.target.value})}>
+                    <option value="all">All (students & faculty)</option>
+                    <option value="students">Students only</option>
+                    <option value="faculty">Faculty only</option>
+                    <option value="admins">Admins only</option>
+                  </select>
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="admins-btn admins-btn--primary">{editingId ? 'Update event' : 'Save event'}</button>
+                  <button type="button" className="admins-btn" onClick={closeEventModal}>Cancel</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete event?"
+        message={`Delete ${confirmDelete ? confirmDelete.label : 'this event'}? This action cannot be undone.`}
+        confirmText="Delete"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={async () => {
+          const id = confirmDelete && confirmDelete.id;
+          setConfirmDelete(null);
+          if (id) await handleDelete(id);
+        }}
+      />
     </div>
   );
 }

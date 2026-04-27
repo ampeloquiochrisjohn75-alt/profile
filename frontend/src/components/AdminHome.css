@@ -342,6 +342,82 @@
   color: #9a3412;
 }
 
+/* Dashboard utility panel */
+.admin-utility-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-utility-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.02);
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-utility-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.admin-utility-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.admin-utility-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.admin-utility-meta {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-bottom: 12px;
+}
+
+.admin-utility-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+
+.admin-utility-meta-row:last-child {
+  border-bottom: none;
+}
+
+.admin-utility-meta-row span {
+  color: var(--text-muted);
+}
+
+.admin-utility-meta-row strong {
+  color: var(--text);
+  font-weight: 700;
+  text-align: right;
+  word-break: break-word;
+}
+
+.admin-utility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Skills */
 .admin-skill-list {
   list-style: none;
@@ -580,6 +656,10 @@
 
   .admin-recent-btn {
     grid-column: 3;
+  }
+
+  .admin-utility-grid {
+    grid-template-columns: 1fr;
   }
 }
 

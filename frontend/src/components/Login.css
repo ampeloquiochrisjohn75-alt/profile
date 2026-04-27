@@ -399,79 +399,142 @@
   );
 }
 
-/* Forgot password / assistance modal (themed to match the login card) */
+/* Forgot password / account assistance modal */
 .forgot-modal-overlay {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(7, 10, 15, 0.45);
+  z-index: 1400;
+  background: rgba(7, 10, 15, 0.5);
   backdrop-filter: blur(6px) saturate(120%);
-  z-index: 1200;
-  padding: 24px;
+  display: grid;
+  place-items: center;
+  padding: 22px;
 }
 
 .forgot-modal {
-  width: min(860px, 94%);
-  max-width: 860px;
-  background: #ffffff; /* bright white background */
-  border-radius: 14px;
-  box-shadow: 0 18px 48px rgba(2,6,23,0.45);
-  border: 1px solid rgba(18,23,30,0.08);
-  padding: 28px 28px 22px 28px;
+  width: min(820px, 100%);
+  max-height: min(86vh, 920px);
+  overflow: auto;
+  background: #ffffff;
   color: var(--text);
+  border-radius: 16px;
+  border: 1px solid rgba(18, 23, 30, 0.1);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.35);
   position: relative;
-  font-family: inherit;
+  padding: 16px;
 }
 
-.forgot-modal h2 {
-  margin: 0 0 10px 0;
-  font-size: 1.25rem;
-  letter-spacing: -0.01em;
+.forgot-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 6px 12px;
+}
+
+.forgot-modal-title {
+  margin: 0;
+  font-size: 1.06rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--text);
-}
-
-.forgot-modal p {
-  color: var(--text-muted, #586070);
-  margin: 0 0 12px 0;
-  line-height: 1.45;
-}
-
-.forgot-modal ul {
-  margin: 10px 0 16px 1.25rem;
-  color: var(--text-muted, #586070);
 }
 
 .forgot-modal-close {
-  position: absolute;
-  right: 12px;
-  top: 10px;
-  width: 38px;
-  height: 38px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted, #5c6370);
-  font-size: 20px;
+  appearance: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+  font-size: 1.1rem;
   line-height: 1;
-  border-radius: 8px;
   cursor: pointer;
 }
 
 .forgot-modal-close:hover {
-  background: rgba(15,23,42,0.04);
   color: var(--text);
 }
 
+.forgot-modal-body {
+  padding: 14px 10px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.forgot-modal-lead {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.forgot-modal-muted {
+  color: var(--text-muted);
+}
+
+.forgot-modal-footnote {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+}
+
+.forgot-modal-body p {
+  margin: 0 0 10px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.forgot-modal-body strong {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.forgot-modal-card {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.forgot-modal-card-title {
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.forgot-modal-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+}
+
+.forgot-modal-list li {
+  margin: 6px 0;
+  color: var(--text-muted);
+}
+
+.forgot-modal-actions {
+  padding: 12px 10px 6px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
 .forgot-modal-fb {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 10px 16px;
   background: linear-gradient(135deg, #ff7a00 0%, #ff9a3d 100%);
   color: #fff;
   text-decoration: none;
   border-radius: 10px;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(255,122,0,0.16);
+  font-weight: 800;
+  box-shadow: 0 10px 22px rgba(255, 122, 0, 0.18);
 }
 
 .forgot-modal-fb:hover {
@@ -480,71 +543,17 @@
 
 @media (max-width: 520px) {
   .forgot-modal {
-    padding: 18px;
-    border-radius: 12px;
+    border-radius: 14px;
+    padding: 12px;
   }
-  .forgot-modal h2 {
-    font-size: 1.05rem;
+  .forgot-modal-actions {
+    justify-content: stretch;
+  }
+  .forgot-modal-actions .admins-btn,
+  .forgot-modal-fb {
+    width: 100%;
   }
 }
-
-/* Forgot password modal */
-.forgot-modal-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.45);
-  z-index: 9999;
-  padding: 24px;
-}
-
-.forgot-modal {
-  width: 100%;
-  max-width: 680px;
-  background: #ffffff; /* ensure body area is pure white */
-  color: var(--text);
-  border-radius: 12px;
-  padding: 20px 22px;
-  box-shadow: 0 12px 48px rgba(2,6,23,0.12);
-  position: relative;
-  overflow: auto;
-  max-height: 80vh;
-}
-
-.forgot-modal h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.25rem;
-}
-
-.forgot-modal p { margin: 0.5rem 0; color: var(--text-muted); }
-
-.forgot-modal ul { margin: 0.5rem 0 1rem 1.25rem; color: var(--text); }
-
-.forgot-modal-close {
-  position: absolute;
-  right: 12px;
-  top: 8px;
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.forgot-modal-fb {
-  display: inline-block;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #ff7a00 0%, #ff9a3d 100%);
-  color: #fff;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.forgot-modal-fb:hover { filter: brightness(0.95); }
 
 .login-hero-content {
   position: relative;

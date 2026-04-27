@@ -29,6 +29,7 @@ export default function StudentList({
   const hasFilters = Boolean(filters.q || filters.skill || filters.activity || filters.courseCode);
   const empty = students.length === 0;
   const noMatches = empty && pageInfo.total === 0;
+  const [studentToDelete, setStudentToDelete] = useState(null);
 
   const [syllabi, setSyllabi] = useState([]);
   useEffect(() => {
@@ -44,6 +45,17 @@ export default function StudentList({
     })();
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (!studentToDelete) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setStudentToDelete(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [studentToDelete]);
 
   return (
     <div className="student-list-page">
@@ -221,9 +233,7 @@ export default function StudentList({
                   type="button"
                   className="student-action-btn student-action-btn--danger"
                   onClick={() => {
-                    if (window.confirm(`Delete ${s.firstName} ${s.lastName} (${s.studentId})? This cannot be undone.`)) {
-                      onDelete(s._id);
-                    }
+                    setStudentToDelete(s);
                   }}
                   title="Delete"
                   aria-label={`Delete ${s.firstName} ${s.lastName}`}
@@ -262,6 +272,39 @@ export default function StudentList({
           Next
         </button>
       </nav>
+
+      {studentToDelete && (
+        <div className="student-confirm-backdrop" role="presentation" onClick={() => setStudentToDelete(null)}>
+          <div className="student-confirm-modal" role="dialog" aria-modal="true" aria-label="Confirm student deletion" onClick={(e) => e.stopPropagation()}>
+            <div className="student-confirm-head">
+              <h3 className="student-confirm-title">Delete student?</h3>
+            </div>
+            <p className="student-confirm-text">
+              Delete{' '}
+              <strong>
+                {[studentToDelete.firstName, studentToDelete.lastName].filter(Boolean).join(' ') || 'this student'} ({studentToDelete.studentId || 'N/A'})
+              </strong>
+              ? This action cannot be undone.
+            </p>
+            <div className="student-confirm-actions">
+              <button type="button" className="student-list-btn student-list-btn--ghost" onClick={() => setStudentToDelete(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="student-list-btn student-list-btn--danger"
+                onClick={() => {
+                  const id = studentToDelete && studentToDelete._id;
+                  setStudentToDelete(null);
+                  if (id) onDelete(id);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

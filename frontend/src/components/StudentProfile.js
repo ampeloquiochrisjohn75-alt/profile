@@ -3,10 +3,12 @@ import { useAccess } from '../context/AccessContext';
 import StudentForm from './StudentForm';
 import SkillLevelPicker from './SkillLevelPicker';
 import SkillIcon from './SkillIcon';
+import ConfirmDialog from './ConfirmDialog';
 import './StudentProfile.css';
 
 export default function StudentProfile({ student, currentUser, onBack, onUpdate, onDelete, onEditingChange, initialEditing = false }){
   const [editing, setEditing] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const access = useAccess();
 
   // if parent requests that we start editing immediately, enable editor
@@ -29,7 +31,6 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this student?')) return;
     if (onDelete) await onDelete(student._id);
   };
 
@@ -77,7 +78,7 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
                   Edit
                 </button>
                 {access.isAdmin && (
-                  <button type="button" className="student-profile-btn student-profile-btn--danger" onClick={handleDelete}>
+                  <button type="button" className="student-profile-btn student-profile-btn--danger" onClick={() => setConfirmDeleteOpen(true)}>
                     Delete
                   </button>
                 )}
@@ -191,28 +192,44 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
       )}
 
       {editing && (
-        <section className="student-profile-panel student-profile-panel--edit">
-          <div className="student-profile-panel-head">
-            <h2 className="student-profile-panel-title">Edit student</h2>
-            <p className="student-profile-panel-sub">Update profile details and save</p>
+        <div className="student-edit-backdrop" role="presentation" onClick={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }}>
+          <div className="student-edit-modal" role="dialog" aria-modal="true" aria-label="Edit student" onClick={(e) => e.stopPropagation()}>
+            <div className="student-edit-head">
+              <h2 className="student-edit-title">Edit student</h2>
+              <button type="button" className="student-edit-close" aria-label="Close edit student" onClick={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }}>
+                ×
+              </button>
+            </div>
+            <div className="student-edit-body">
+              {access.isAdmin ? (
+                <StudentForm initial={student} onSubmit={handleUpdate} onCancel={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }} allowSkills={false} />
+              ) : (
+                <StudentSkillsForm
+                  initial={student}
+                  onSubmit={async (payload) => {
+                    await handleUpdate(payload);
+                    setEditing(false);
+                    if (typeof onEditingChange === 'function') onEditingChange(false);
+                  }}
+                  onCancel={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }}
+                />
+              )}
+            </div>
           </div>
-          <div className="student-profile-edit-body">
-            {access.isAdmin ? (
-              <StudentForm initial={student} onSubmit={handleUpdate} onCancel={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }} allowSkills={false} />
-            ) : (
-              <StudentSkillsForm
-                initial={student}
-                onSubmit={async (payload) => {
-                  await handleUpdate(payload);
-                  setEditing(false);
-                  if (typeof onEditingChange === 'function') onEditingChange(false);
-                }}
-                onCancel={() => { setEditing(false); if (typeof onEditingChange === 'function') onEditingChange(false); }}
-              />
-            )}
-          </div>
-        </section>
+        </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete student?"
+        message={`Delete ${(student.firstName || '').trim()} ${(student.lastName || '').trim()} (${student.studentId || 'N/A'})? This action cannot be undone.`}
+        confirmText="Delete"
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={async () => {
+          setConfirmDeleteOpen(false);
+          await handleDelete();
+        }}
+      />
     </div>
   );
 }

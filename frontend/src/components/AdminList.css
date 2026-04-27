@@ -151,6 +151,23 @@
   transform: translateY(-1px);
 }
 
+.admins-btn--danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 60%, #b91c1c 100%);
+  color: #fff;
+  border-color: rgba(185, 28, 28, 0.55);
+  box-shadow: 0 2px 14px rgba(220, 38, 38, 0.28);
+}
+
+.admins-btn--danger:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 4px 18px rgba(220, 38, 38, 0.34);
+  transform: translateY(-1px);
+}
+
+.admins-btn--danger:focus-visible {
+  outline-color: rgba(220, 38, 38, 0.95);
+}
+
 /* —— Panel & table —— */
 .admins-panel {
   border-radius: 14px;

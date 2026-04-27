@@ -6,7 +6,7 @@
 
 .student-form-page {
   width: 100%;
-  max-width: 100%;
+  max-width: min(1120px, 100%);
   margin: 0 auto;
   padding: 0 0 32px;
 }
@@ -89,6 +89,10 @@
   overflow: hidden;
 }
 
+.student-form--add .student-form-card {
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
 .student-form-card::before {
   content: "";
   position: absolute;
@@ -117,6 +121,10 @@
 
 .student-form-section--nested {
   background: rgba(15, 23, 42, 0.02);
+}
+
+.student-form--add .student-form-section:first-of-type {
+  background: linear-gradient(180deg, rgba(255, 250, 245, 0.7), transparent 75%);
 }
 
 .student-form-section-head {
@@ -171,6 +179,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-muted);
+  letter-spacing: 0.01em;
 }
 
 .student-form .form-group input,
@@ -224,6 +233,25 @@
   line-height: 1.45;
 }
 
+.student-form-inline-link-row {
+  margin-top: 7px;
+}
+
+.student-form-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b45309;
+  text-decoration: none;
+}
+
+.student-form-inline-link:hover {
+  text-decoration: underline;
+  color: #9a3412;
+}
+
 /* —— Repeatable blocks —— */
 .student-form-repeatable {
   margin-bottom: 16px;
@@ -231,7 +259,7 @@
   border-radius: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 
 .student-form-repeatable:last-of-type {
@@ -341,6 +369,20 @@
   margin-top: 0;
   background: var(--surface);
   border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+}
+
+.student-form-actions::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(15, 23, 42, 0.03));
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {

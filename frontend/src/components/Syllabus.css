@@ -2,10 +2,39 @@
 
 .syllabus-form {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-  padding: 12px;
+  padding: 6px 0 0;
+}
+
+.syllabus-modal-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.syllabus-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.syllabus-modal-field label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.syllabus-modal-field--title,
+.syllabus-modal-field--description {
+  grid-column: span 8;
+}
+
+.syllabus-modal-field--code {
+  grid-column: span 4;
 }
 
 .syllabus-input {
@@ -19,47 +48,148 @@
   color: var(--text);
   min-width: 160px;
   box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.syllabus-input:focus {
+  outline: none;
+  border-color: rgba(255, 122, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
 }
 
 .syllabus-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
+  padding-top: 8px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
+.syllabus-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(15, 23, 42, 0.36);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.syllabus-modal {
+  width: min(900px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+  padding: 14px 16px 16px;
+}
+
+.syllabus-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.syllabus-modal-title {
+  margin: 0;
+  font-size: 1.03rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.syllabus-modal-close {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.syllabus-modal-close:hover {
+  color: var(--text);
 }
 
 .syllabus-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  padding: 6px 8px;
 }
 
 .syllabus-card {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  background: transparent;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  gap: 12px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.syllabus-card:hover {
+  border-color: rgba(255, 122, 0, 0.25);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 
 .syllabus-card-main {
-  max-width: 74%;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1;
 }
 
 .syllabus-card-title {
   font-size: 1rem;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 9px;
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.syllabus-card-title small {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #b45309;
+  background: var(--accent-soft);
+  border: 1px solid rgba(255, 122, 0, 0.2);
+  border-radius: 999px;
+  padding: 3px 8px;
 }
 
 .syllabus-card-desc {
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 74ch;
 }
 
 .syllabus-card-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .syllabus-edit-form {
@@ -69,12 +199,25 @@
 }
 
 @media (max-width: 700px) {
+  .syllabus-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .syllabus-modal-field--title,
+  .syllabus-modal-field--description,
+  .syllabus-modal-field--code {
+    grid-column: auto;
+  }
+
   .syllabus-card {
     flex-direction: column;
     gap: 8px;
   }
   .syllabus-card-main {
     max-width: 100%;
+  }
+  .syllabus-card-desc {
+    max-width: none;
   }
   .syllabus-input {
     min-width: 120px;
@@ -83,5 +226,9 @@
   .syllabus-edit-form {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .syllabus-modal {
+    padding: 12px;
   }
 }

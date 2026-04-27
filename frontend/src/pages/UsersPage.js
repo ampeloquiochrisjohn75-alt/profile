@@ -79,9 +79,8 @@ export default function UsersPage({ onAddStudent, showMessage }){
       pageInfo={pageInfo}
       changePage={changePage}
       onViewProfile={(id) => navigate(`/users/${id}`)}
-      onEditProfile={(id) => navigate(`/users/${id}`, { state: { edit: true } })}
+      onEditProfile={(id) => navigate(`/users/${id}/edit`)}
       onDelete={async (id) => {
-        if (!window.confirm('Delete this student? This cannot be undone.')) return;
         try {
           await deleteStudent(id);
           window.dispatchEvent(new Event('students:reload'));

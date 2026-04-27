@@ -219,33 +219,50 @@ export default function AdminHome({ onOpenProfile, onAddStudent, onOpenDepartmen
       <div className="admin-dash-panels">
         {currentUser && (
           <section className="admin-panel admin-panel--account">
-            <h2 className="admin-panel-heading">Your account</h2>
-            <dl className="admin-account-dl">
-              <div className="admin-account-row">
-                <dt>ID</dt>
-                <dd>{currentUser.studentId}</dd>
+            <div className="admin-panel-head">
+              <h2 className="admin-panel-heading">Dashboard utility</h2>
+              <span className="admin-panel-sub">Quick insights and actions</span>
+            </div>
+
+            <div className="admin-utility-grid">
+              <article className="admin-utility-card">
+                <span className="admin-utility-label">This month</span>
+                <strong className="admin-utility-value">{newThisMonth == null ? '—' : newThisMonth}</strong>
+                <span className="admin-utility-hint">New student profiles</span>
+              </article>
+              <article className="admin-utility-card">
+                <span className="admin-utility-label">Last 7 days</span>
+                <strong className="admin-utility-value">{newLast7Days == null ? '—' : newLast7Days}</strong>
+                <span className="admin-utility-hint">Recent registrations</span>
+              </article>
+              <article className="admin-utility-card">
+                <span className="admin-utility-label">Skills coverage</span>
+                <strong className="admin-utility-value">
+                  {withSkillsCount == null || total == null || total === 0 ? '—' : `${Math.round((withSkillsCount / total) * 100)}%`}
+                </strong>
+                <span className="admin-utility-hint">Students with listed skills</span>
+              </article>
+            </div>
+
+            <div className="admin-utility-meta">
+              <div className="admin-utility-meta-row">
+                <span>Signed in as</span>
+                <strong>{[currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || currentUser.studentId || 'Admin'}</strong>
               </div>
-              <div className="admin-account-row">
-                <dt>Name</dt>
-                <dd>
-                  {[currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || '—'}
-                </dd>
+              <div className="admin-utility-meta-row">
+                <span>Email</span>
+                <strong>{currentUser.email || '—'}</strong>
               </div>
-              <div className="admin-account-row">
-                <dt>Email</dt>
-                <dd>{currentUser.email}</dd>
-              </div>
-              <div className="admin-account-row">
-                <dt>Role</dt>
-                <dd>
-                  <span className="admin-pill">{currentUser.role}</span>
-                </dd>
-              </div>
-              <div className="admin-account-row">
-                <dt>Department</dt>
-                <dd>{currentUser.course || '—'}</dd>
-              </div>
-            </dl>
+            </div>
+
+            <div className="admin-utility-actions">
+              <button type="button" className="admins-btn admins-btn--primary" onClick={() => onOpenDepartments && onOpenDepartments()}>
+                Departments
+              </button>
+              <button type="button" className="admins-btn" onClick={() => onAddAdmin && onAddAdmin()}>
+                Add admin
+              </button>
+            </div>
           </section>
         )}
 

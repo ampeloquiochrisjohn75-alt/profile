@@ -11,7 +11,7 @@ function initials(firstName, lastName, studentId) {
   return '?';
 }
 
-export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0, profile: initialProfile = null }) {
+export default function StudentHome({ refreshKey = 0, profile: initialProfile = null }) {
   const [profile, setProfile] = useState(initialProfile || null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([]);
@@ -196,19 +196,6 @@ export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0
         </article>
       </section>
 
-      <section className="student-dash-actions" aria-label="Quick actions">
-        <button type="button" className="student-action-card student-action-card--primary" onClick={() => onGoProfile && onGoProfile()}>
-          <span className="student-action-icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </span>
-          <span className="student-action-title">My profile</span>
-          <span className="student-action-desc">View or edit your details, skills, and history</span>
-        </button>
-      </section>
-
       <div className="student-dash-panels">
         <section className="student-panel student-panel--skills">
           <div className="student-panel-head">
@@ -328,9 +315,9 @@ export default function StudentHome({ onOpenProfile, onGoProfile, refreshKey = 0
                       .join(', ')}
                   </span>
                 </div>
-                <button type="button" className="student-peer-btn" onClick={() => onOpenProfile && onOpenProfile(p._id, false)}>
+                <span className="student-peer-btn" aria-hidden="true" style={{ opacity: 0.65 }}>
                   View
-                </button>
+                </span>
               </li>
             ))}
           </ul>

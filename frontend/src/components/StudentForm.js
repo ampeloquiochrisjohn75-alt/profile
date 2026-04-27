@@ -227,7 +227,9 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
                     <option key={s._id} value={s.title}>{s.title}{s.courseCode ? ` (${s.courseCode})` : ''}</option>
                   ))}
                 </select>
-                <div style={{marginTop:6}}><a href="/syllabus">Manage programs</a></div>
+                <div className="student-form-inline-link-row">
+                  <a className="student-form-inline-link" href="/syllabus">Manage programs</a>
+                </div>
               </div>
               <div className="form-group">
                 <label htmlFor="sf-department">Department</label>

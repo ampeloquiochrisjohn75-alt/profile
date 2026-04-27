@@ -5,21 +5,38 @@
   gap: 8px;
   flex-wrap: wrap;
   align-items: flex-start;
+  padding: 6px 0 0;
+}
+
+.reports-top-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(140px, 180px) minmax(320px, 1.5fr) minmax(220px, auto);
+  gap: 10px;
+  align-items: start;
 }
 .reports-input {
-  padding: 10px 12px;
-  border-radius: 8px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface-elevated);
-  min-width: 200px;
+  min-width: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
 }
 .reports-textarea {
-  min-width: 360px;
-  min-height: 80px;
+  min-width: 0;
+  min-height: 84px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface-elevated);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
 }
 
 .reports-checkbox {
@@ -29,14 +46,30 @@
   font-size: 0.95rem;
 }
 
+.reports-check-group {
+  display: grid;
+  gap: 8px;
+}
+
+.reports-checkbox--card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
 .reports-recipients {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 .reports-recipients-col {
   flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.02);
 }
 .reports-multiselect {
   min-height: 120px;
@@ -47,9 +80,12 @@
   background: var(--surface-elevated);
 }
 .reports-field-label {
-  font-size: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .reports-spacer {
   width: 16px;
@@ -58,42 +94,175 @@
 .reports-actions {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
+}
+
+.reports-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(15, 23, 42, 0.36);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.reports-modal {
+  width: min(1080px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+  padding: 14px 16px 16px;
+}
+
+.reports-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.reports-modal-title {
+  margin: 0;
+  font-size: 1.03rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.reports-modal-close {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.reports-modal-close:hover {
+  color: var(--text);
 }
 
 .reports-list-wrap {
-  padding-left: 6px;
+  padding: 6px 8px;
+}
+
+.reports-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+
+.reports-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.reports-summary-pill strong {
+  color: var(--text);
+  font-weight: 800;
 }
 .reports-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .report-card {
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 12px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.01), transparent);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(15, 23, 42, 0.03));
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid rgba(255, 122, 0, 0.45);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.report-card:hover {
+  border-color: rgba(255, 122, 0, 0.25);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 .report-card-main {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+}
+
+.report-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 }
 .report-card-title {
   margin: 0;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
+
+.report-card-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.report-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 122, 0, 0.2);
+  background: var(--accent-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9a3412;
+}
+
+.report-pill--visibility {
+  border-color: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.1);
+  color: #1d4ed8;
+}
+
 .report-card-pre {
   white-space: pre-wrap;
-  background: transparent;
+  background: rgba(15, 23, 42, 0.03);
   margin: 0;
   color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  font-size: 0.9rem;
+  max-height: 220px;
+  overflow: auto;
 }
 .report-card-actions {
   display: flex;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 0;
+  flex-shrink: 0;
 }
 .report-editing {
   padding: 8px;
@@ -107,6 +276,9 @@
   .reports-form {
     flex-direction: column;
   }
+  .reports-top-grid {
+    grid-template-columns: 1fr;
+  }
   .reports-textarea {
     min-width: 100%;
   }
@@ -117,12 +289,21 @@
     width: 100%;
     height: 8px;
   }
+
+  .reports-modal {
+    padding: 12px;
+  }
+
+  .report-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* Multi-select token styles */
 .reports-multi {
   position: relative;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   padding: 8px;
   background: var(--surface-elevated);
@@ -172,7 +353,7 @@
   left: 0;
   right: 0;
   margin-top: 8px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
   max-height: 240px;

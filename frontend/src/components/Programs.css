@@ -2,10 +2,30 @@
 
 .programs-form {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-  padding: 12px;
+  padding: 6px 0 0;
+}
+
+.program-modal-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.program-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.program-modal-field label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .program-input {
@@ -19,12 +39,76 @@
   color: var(--text);
   min-width: 180px;
   box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.program-input:focus {
+  outline: none;
+  border-color: rgba(255, 122, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.12);
 }
 
 .program-actions {
   display: flex;
   gap: 8px;
   align-items: center;
+  width: 100%;
+  padding-top: 8px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
+.program-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(15, 23, 42, 0.36);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.program-modal {
+  width: min(860px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+  padding: 14px 16px 16px;
+}
+
+.program-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.program-modal-title {
+  margin: 0;
+  font-size: 1.03rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.program-modal-close {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.program-modal-close:hover {
+  color: var(--text);
 }
 
 .program-list {
@@ -76,6 +160,10 @@
 }
 
 @media (max-width: 700px) {
+  .program-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
   .program-card {
     flex-direction: column;
     gap: 8px;
@@ -86,5 +174,9 @@
   .program-input {
     min-width: 120px;
     flex: 1 1 auto;
+  }
+
+  .program-modal {
+    padding: 12px;
   }
 }

@@ -21,9 +21,19 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
     }
   }, [initialEditing]);
 
-  // keep parent informed when editing state changes so navigation locks work
+  const mountedRef = React.useRef(false);
+  const prevEditingRef = React.useRef(editing);
+  // keep parent informed only when editing actually changes
   React.useEffect(() => {
-    if (typeof onEditingChange === 'function') onEditingChange(!!editing);
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      prevEditingRef.current = editing;
+      return;
+    }
+    if (prevEditingRef.current !== editing) {
+      if (typeof onEditingChange === 'function') onEditingChange(!!editing);
+      prevEditingRef.current = editing;
+    }
   }, [editing, onEditingChange]);
 
   if (!student) return null;

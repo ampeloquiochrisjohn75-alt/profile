@@ -27,27 +27,6 @@ import NotificationsBell from './components/NotificationsBell';
 
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 
-function HeaderUserInline({ user }) {
-  const headerName = [user && user.firstName, user && user.lastName]
-    .map((v) => (v ? String(v).trim() : ''))
-    .filter(Boolean)
-    .join(' ')
-    .toUpperCase();
-  const headerId = (user && (user.studentId || user.email || user.firstName || 'USER')) || 'USER';
-
-  return (
-    <div className="app-header-user-inline">
-      <div className="app-user-chip">
-        <div className="app-user-inline">
-          <span className="app-user-inline-id" title={headerId}>{headerId}</span>
-          <span className="app-user-inline-sep" aria-hidden>|</span>
-          <span className="app-user-inline-name" title={headerName || headerId}>{headerName || headerId}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function HeaderAccount({ user, userInitial, darkMode, setDarkMode, onProfile, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -161,6 +140,13 @@ function App() {
       return false;
     }
   });
+  const userInitial = React.useMemo(() => {
+    if (!user) return '';
+    const raw = (user.firstName && String(user.firstName).trim()[0]) ||
+      (user.studentId && String(user.studentId).trim()[0]) ||
+      (user.email && String(user.email).trim()[0]) || '';
+    return raw.toUpperCase();
+  }, [user]);
   const navigateRef = useRef(null);
 
   const showMessage = useCallback((msg, type = 'info', timeout = 4000) => {
@@ -438,7 +424,12 @@ function App() {
       if (p === '/' || p === '/dashboard') {
         setViewTracked('home');
       } else if (p === '/users') {
-        setViewTracked('list');
+        if (userRoleLocal && userRoleLocal !== 'admin') {
+          setSelected(authProfile);
+          setViewTracked('profile');
+        } else {
+          setViewTracked('list');
+        }
       } else if (p === '/users/add') {
         setViewTracked('add');
       } else if (p.startsWith('/users/')) {
@@ -471,9 +462,14 @@ function App() {
       } else if (p === '/admins') {
         setViewTracked('admins-list');
       } else if (p === '/account') {
-        setViewTracked('account');
+        if (userRoleLocal && userRoleLocal !== 'admin') {
+          setSelected(authProfile);
+          setViewTracked('profile');
+        } else {
+          setViewTracked('account');
+        }
       }
-    }, [location, navigate]);
+    }, [location, navigate, authProfile, userRoleLocal]);
 
     const handleNavRouter = useCallback(async (key) => {
       // keep legacy AppSidebar API but use router navigation where applicable
@@ -635,9 +631,10 @@ function App() {
                     <span className="app-brand-tagline">Skills, programs & records</span>
                   </div>
                 </div>
-                <HeaderUserInline user={user} />
               </div>
               <HeaderAccount
+                user={user}
+                userInitial={userInitial}
                 darkMode={darkMode}
                 setDarkMode={setDarkMode}
                 onProfile={() => navigate('/account')}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import SkillIcon from './SkillIcon';
 import './StudentList.css';
-import { fetchSyllabi } from '../api';
+import { fetchCourses } from '../api';
 
 function initials(firstName, lastName, studentId) {
   const a = (firstName && String(firstName).trim()[0]) || '';
@@ -32,16 +32,16 @@ export default function StudentList({
   const noMatches = empty && pageInfo.total === 0;
   const [studentToDelete, setStudentToDelete] = useState(null);
 
-  const [syllabi, setSyllabi] = useState([]);
+  const [courses, setCourses] = useState([]);
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetchSyllabi();
+        const res = await fetchCourses();
         if (!mounted) return;
-        setSyllabi(res.data || []);
+        setCourses(res.data || []);
       } catch (e) {
-        console.warn('fetchSyllabi failed', e && e.message ? e.message : e);
+        console.warn('fetchCourses failed', e && e.message ? e.message : e);
       }
     })();
     return () => { mounted = false; };
@@ -112,7 +112,7 @@ export default function StudentList({
             />
           </div>
           <div className="student-list-field">
-            <label htmlFor="student-filter-courseCode">Course code</label>
+            <label htmlFor="student-filter-courseCode">Program</label>
             <select
               id="student-filter-courseCode"
               className="student-list-input"
@@ -120,8 +120,8 @@ export default function StudentList({
               onChange={(e) => setFilters((f) => ({ ...f, courseCode: e.target.value }))}
             >
               <option value="">Any</option>
-              {syllabi.filter(s => s && s.courseCode).map(s => (
-                <option key={s._id || s.courseCode} value={s.courseCode}>{s.courseCode + (s.title ? ` — ${s.title}` : '')}</option>
+              {courses.filter(c => c && c.courseCode).map(c => (
+                <option key={c._id || c.courseCode} value={c.courseCode}>{c.courseCode + (c.title ? ` — ${c.title}` : '')}</option>
               ))}
             </select>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchDepartments, fetchSyllabi } from '../api';
+import { fetchDepartments, fetchCourses } from '../api';
 import './StudentForm.css';
 
 export default function StudentForm({ onSubmit, onCancel, initial = null, allowSkills = true, isRegistration = false, showMessage }){
@@ -7,7 +7,7 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
   const [academic, setAcademic] = useState([]);
   const [violations, setViolations] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [syllabi, setSyllabi] = useState([]);
+  const [courses, setCourses] = useState([]);
 
   const prevInitialId = useRef(null);
   useEffect(() => {
@@ -76,11 +76,11 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
     })();
     (async () => {
       try {
-        const s = await fetchSyllabi();
+        const res = await fetchCourses();
         if (!mounted) return;
-        setSyllabi((s && s.data) || []);
+        setCourses((res && res.data) || []);
       } catch (err) {
-        console.warn('fetchSyllabi failed', err.message);
+        console.warn('fetchCourses failed', err.message);
       }
     })();
     return () => { mounted = false; };
@@ -233,12 +233,14 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
                 <label htmlFor="sf-course">Program</label>
                 <select id="sf-course" name="course" value={form.course} onChange={handle}>
                   <option value="">Select program</option>
-                  {syllabi.map(s => (
-                    <option key={s._id} value={s.title}>{s.title}{s.courseCode ? ` (${s.courseCode})` : ''}</option>
+                  {courses.map(c => (
+                    <option key={c._id} value={c.courseCode || c.title || c._id}>
+                      {c.courseCode ? `${c.courseCode} ${c.title || ''}`.trim() : (c.title || c.courseCode || 'Untitled program')}
+                    </option>
                   ))}
                 </select>
                 <div className="student-form-inline-link-row">
-                  <a className="student-form-inline-link" href="/syllabus">Manage programs</a>
+                  <a className="student-form-inline-link" href="/programs">Manage programs</a>
                 </div>
               </div>
               <div className="form-group">

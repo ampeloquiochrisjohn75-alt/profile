@@ -36,6 +36,19 @@ export default function NotificationsBell() {
 
   const unread = notes.filter(n => !n.read).length;
 
+  function timeAgo(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    const s = Math.floor((Date.now() - d.getTime())/1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s/60);
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m/60);
+    if (h < 24) return `${h}h`;
+    const days = Math.floor(h/24);
+    return `${days}d`;
+  }
+
   const onClickNote = async (n) => {
     try {
       await markNotificationRead(n._id);
@@ -75,12 +88,17 @@ export default function NotificationsBell() {
         </div>
         <div className="notif-list">
           {notes.length === 0 ? (
-            <div className="muted">No notifications</div>
+            <div className="muted notif-empty">No notifications</div>
           ) : (
             notes.map(n => (
               <button key={n._id} type="button" className={`notif-item${n.read ? '' : ' unread'}`} onClick={() => onClickNote(n)}>
-                <div className="notif-item-msg">{n.message}</div>
-                <div className="notif-item-time">{new Date(n.createdAt).toLocaleString()}</div>
+                <div className="notif-item-left" aria-hidden>
+                  <span className={`notif-icon ${n.read ? 'read' : 'unread'}`} />
+                </div>
+                <div className="notif-item-body">
+                  <div className="notif-item-msg">{n.message}</div>
+                  <div className="notif-item-meta"><span className="notif-item-time">{timeAgo(n.createdAt)}</span>{n.link ? <span className="notif-item-link"> · Open</span> : null}</div>
+                </div>
               </button>
             ))
           )}

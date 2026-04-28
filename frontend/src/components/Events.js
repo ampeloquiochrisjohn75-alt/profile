@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { fetchEvents, createEvent, updateEvent, deleteEvent } from '../api';
 import ConfirmDialog from './ConfirmDialog';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAccess } from '../context/AccessContext';
 import './AdminList.css';
 import './Events.css';
@@ -32,10 +32,9 @@ export default function Events({ showMessage }) {
   useEffect(() => { load(); }, [load]);
 
   const location = useLocation();
-  const navigate = useNavigate();
   const access = useAccess();
   const isAdmin = !!(access && access.isAdmin);
-  const [openEventId, setOpenEventId] = useState(null);
+  const [, setOpenEventId] = useState(null);
 
   useEffect(() => {
     const qs = new URLSearchParams(location.search || '');
@@ -122,7 +121,7 @@ export default function Events({ showMessage }) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [showAddModal, showEditModal]);
 
-  const openEv = openEventId ? (rows.find(x => x._id === openEventId) || rows.find(x => String(x._id) === String(openEventId))) : null;
+  // Note: openEventId is intentionally not used in the UI currently.
 
   return (
     <div className="admins-page">

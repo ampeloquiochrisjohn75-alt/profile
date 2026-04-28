@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchStudents, exportStudentsCSV, deleteStudent } from '../api';
 import StudentList from '../components/StudentList';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function UsersPage({ onAddStudent, showMessage }){
   const [students, setStudents] = useState([]);
@@ -52,20 +53,42 @@ export default function UsersPage({ onAddStudent, showMessage }){
   const clearFiltersAndReload = async () => { setFilters({ skill: '', activity: '', q: '', courseCode: '' }); await load({ skill: '', activity: '', q: '', courseCode: '', page: 1 }); };
   const changePage = async (nextPage) => await load({ skill: filters.skill, activity: filters.activity, q: filters.q, courseCode: filters.courseCode, page: nextPage });
   const handleExport = async () => {
-    const csv = await exportStudentsCSV(filters);
-    if (!csv) { console.warn('Export failed'); return; }
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'students_export.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    try {
+      const hasFilters = Boolean(filters.q || filters.skill || filters.activity || filters.courseCode);
+      let csv = null;
+      if (hasFilters) {
+        csv = await exportStudentsCSV(filters);
+        if (!csv) { console.warn('Export failed'); return; }
+      } else {
+        // No filters: export the currently loaded students (client-side, preserves current page)
+        const header = ['studentId','firstName','lastName','email','course','courseCode','skills','activities','affiliations'];
+        const rows = (students || []).map(s => {
+          const skills = (s.skills || []).map(sk => (typeof sk === 'string' ? sk : `${sk.name}:${sk.level}`)).join('|');
+          const activities = (s.nonAcademicActivities || []).join('|');
+          const affiliations = (s.affiliations || []).join('|');
+          const values = [s.studentId, s.firstName, s.lastName, s.email, s.course, s.courseCode || '', skills, activities, affiliations];
+          return values.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',');
+        });
+        csv = [header.join(','), ...rows].join('\n');
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'students_export.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error', err);
+    }
   };
 
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const canExport = Boolean(profile && profile.role === 'admin');
 
   return (
     <StudentList
@@ -90,6 +113,7 @@ export default function UsersPage({ onAddStudent, showMessage }){
         }
       }}
       onAddStudent={onAddStudent}
+      canExport={canExport}
     />
   );
 }

@@ -255,6 +255,34 @@
   align-items: center;
 }
 
+/* Event detail modal */
+.event-detail-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2,6,23,0.45);
+  z-index: 120;
+}
+.event-detail-inner {
+  background: var(--surface-elevated);
+  color: var(--text);
+  padding: 18px;
+  border-radius: 10px;
+  width: min(720px, 96%);
+  box-shadow: 0 20px 60px rgba(2,6,23,0.2);
+}
+.event-detail-close {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
 @media (max-width: 700px) {
   .events-modal-grid {
     grid-template-columns: 1fr;

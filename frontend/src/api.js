@@ -383,6 +383,22 @@ export async function deleteEvent(id) {
   return readJson(res);
 }
 
+// Notifications
+export async function fetchNotifications() {
+  const res = await fetch(`${API_ROOT}/notifications`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJsonSafe(res, { data: [] });
+}
+
+export async function markNotificationRead(id) {
+  const res = await fetch(`${API_ROOT}/notifications/${id}/read`, { method: 'PUT', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJson(res);
+}
+
+export async function markAllNotificationsRead() {
+  const res = await fetch(`${API_ROOT}/notifications/read-all`, { method: 'PUT', headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });
+  return readJson(res);
+}
+
 // Sections
 export async function fetchSections() {
   const res = await fetch(`${API_ROOT}/sections`, { headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' } });

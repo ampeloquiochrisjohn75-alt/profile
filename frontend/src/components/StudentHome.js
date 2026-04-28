@@ -143,7 +143,17 @@ export default function StudentHome({ refreshKey = 0, profile: initialProfile = 
             </span>
           </div>
           <div className="student-dash-complete" role="status" aria-label="Profile completeness">
-            <span className="student-dash-complete-label">Profile strength</span>
+            <span className="student-dash-complete-label">
+              Profile strength
+              <button type="button" className="student-dash-help" aria-label="How to strengthen your profile">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4" />
+                  <circle cx="12" cy="16" r="1" />
+                </svg>
+                <span className="student-dash-help-tooltip">Add skills, activities, academic history, and your program to increase profile strength.</span>
+              </button>
+            </span>
             <div className="student-dash-complete-track">
               <div className="student-dash-complete-fill" style={{ width: `${profileCompleteness}%` }} />
             </div>

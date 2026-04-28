@@ -173,7 +173,6 @@ export default function Faculty({ showMessage }) {
                                   </svg>
                                 </button>
                               </div>
-                            </div>
                           </td>
                         </tr>
                       );

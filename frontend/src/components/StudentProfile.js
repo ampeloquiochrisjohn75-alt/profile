@@ -12,8 +12,13 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
   const access = useAccess();
 
   // if parent requests that we start editing immediately, enable editor
+  // Only apply the initialEditing directive once to avoid repeated toggles
+  const appliedInitialEditRef = React.useRef(false);
   React.useEffect(() => {
-    if (initialEditing) setEditing(true);
+    if (!appliedInitialEditRef.current && initialEditing) {
+      setEditing(true);
+      appliedInitialEditRef.current = true;
+    }
   }, [initialEditing]);
 
   // keep parent informed when editing state changes so navigation locks work

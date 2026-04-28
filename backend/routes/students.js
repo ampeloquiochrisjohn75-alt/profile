@@ -161,11 +161,12 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
-// Export CSV for current filter
-router.get('/export', async (req, res) => {
+// Export CSV for current filter (admin only)
+router.get('/export', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { skill, activity, affiliation, q, courseCode } = req.query;
-    const filter = {};
+    // Only export student records (exclude admin/system users)
+    const filter = { role: 'student' };
     if (skill) filter['skills.name'] = { $in: [skill.toLowerCase()] };
     if (activity) filter.nonAcademicActivities = { $in: [activity.toLowerCase()] };
     if (affiliation) filter.affiliations = { $in: [affiliation.toLowerCase()] };

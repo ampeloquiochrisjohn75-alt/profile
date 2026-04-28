@@ -25,6 +25,7 @@ export default function StudentList({
   onEditProfile,
   onDelete,
   onAddStudent,
+  canExport = true,
 }) {
   const hasFilters = Boolean(filters.q || filters.skill || filters.activity || filters.courseCode);
   const empty = students.length === 0;
@@ -132,9 +133,11 @@ export default function StudentList({
           <button type="button" className="student-list-btn student-list-btn--ghost" onClick={onClearFilters}>
             Clear
           </button>
-          <button type="button" className="student-list-btn student-list-btn--outline" onClick={onExport}>
-            Export CSV
-          </button>
+          {canExport && (
+            <button type="button" className="student-list-btn student-list-btn--outline" onClick={onExport}>
+              Export CSV
+            </button>
+          )}
         </div>
       </section>
 

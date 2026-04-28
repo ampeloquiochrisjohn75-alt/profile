@@ -83,7 +83,6 @@ function AppSidebar({
             {navBtn('home', 'Dashboard', pathname === '/' || pathname === '/dashboard')}
             {navBtn('syllabus', 'Syllabus', pathname === '/syllabus')}
             {navBtn('events', 'Events', pathname === '/events')}
-            {navBtn('sections', 'Sections', pathname === '/sections')}
             {navBtn('schedules', 'Schedules', pathname === '/schedules')}
             {navBtn('reports', 'Reports', pathname === '/reports')}
           </nav>
@@ -150,12 +149,7 @@ function AppSidebar({
             </div>
           </div>
 
-          <div className="app-sidebar-section">
-            <div className="app-sidebar-section-title">Departments</div>
-            <div className="app-sidebar-sub">
-              {navBtn('departments', 'View departments', pathname === '/departments')}
-            </div>
-          </div>
+          {/* Departments removed: site is CCS-only */}
 
           <div className="app-sidebar-section">
             <div className="app-sidebar-section-title">Admins</div>

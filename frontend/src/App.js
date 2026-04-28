@@ -23,6 +23,7 @@ import Events from './components/Events';
 import Sections from './components/Sections';
 import Schedules from './components/Schedules';
 import Reports from './components/Reports';
+import NotificationsBell from './components/NotificationsBell';
 
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 
@@ -47,7 +48,7 @@ function HeaderUserInline({ user }) {
   );
 }
 
-function HeaderAccount({ darkMode, setDarkMode, onProfile, onLogout }) {
+function HeaderAccount({ user, userInitial, darkMode, setDarkMode, onProfile, onLogout }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -71,6 +72,17 @@ function HeaderAccount({ darkMode, setDarkMode, onProfile, onLogout }) {
 
   return (
     <div className="app-header-user">
+      <div className="app-user-chip">
+        <span className="app-user-avatar" aria-hidden>
+          {String(userInitial || (user && (user.firstName || user.email) ? (user.firstName || user.email)[0] : '?')).toUpperCase()}
+        </span>
+        <div className="app-user-meta">
+          <span className="app-user-id" title={user && user.studentId}>{user && (user.studentId || user.email || user.firstName || '')}</span>
+          <span className="app-user-role">{user && user.role}</span>
+        </div>
+      </div>
+
+      <NotificationsBell />
       <button
         type="button"
         className="app-btn-theme-toggle"
@@ -461,7 +473,7 @@ function App() {
       } else if (p === '/account') {
         setViewTracked('account');
       }
-    }, [location, navigate, access.isAdmin]);
+    }, [location, navigate]);
 
     const handleNavRouter = useCallback(async (key) => {
       // keep legacy AppSidebar API but use router navigation where applicable

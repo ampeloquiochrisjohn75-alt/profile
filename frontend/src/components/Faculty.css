@@ -137,6 +137,39 @@
   padding: 12px;
 }
 
+/* Info icon and helper for Title examples */
+.faculty-help {
+  display: none;
+  font-size: 0.85rem;
+  color: var(--muted, #6b7280);
+  white-space: nowrap;
+}
+
+/* container to position helper tooltip above the input */
+.field-with-help {
+  position: relative;
+  display: inline-block;
+}
+.field-with-help .faculty-help {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  display: block;
+  background: var(--surface-elevated);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.08);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  z-index: 20;
+  display: none;
+}
+.field-with-help:hover .faculty-help,
+.field-with-help:focus-within .faculty-help {
+  display: block;
+}
+
 @media (max-width: 700px) {
   .faculty-modal-grid {
     grid-template-columns: 1fr;

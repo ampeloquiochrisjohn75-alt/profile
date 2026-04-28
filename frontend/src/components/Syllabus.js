@@ -112,41 +112,38 @@ export default function Syllabus({ showMessage }) {
 
         <div>
           {loading ? <div style={{padding:12}}>Loading…</div> : (
-            rows.length === 0 ? (
-              <div className="admins-empty">
-                <div className="admins-empty-icon" aria-hidden>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <h2 className="admins-empty-title">No syllabi</h2>
-                <p className="admins-empty-text">No syllabus entries were returned. Add a new syllabus using the form above.</p>
-              </div>
-            ) : (
-              <div className="syllabus-list">
                 {rows.map(s => (
                   <article key={s._id} className="syllabus-card">
-                    <>
-                      <div className="syllabus-card-main">
-                        <div className="syllabus-card-title"><strong>{s.title}</strong> {s.courseCode ? <small>({s.courseCode})</small> : null}</div>
-                        <div className="syllabus-card-desc">{s.description}</div>
+                    <div className="syllabus-card-main">
+                      <div className="syllabus-card-title"><strong>{s.title}</strong> {s.courseCode ? <small>({s.courseCode})</small> : null}</div>
+                      <div className="syllabus-card-desc">{s.description}</div>
+                    </div>
+                    <div className="syllabus-card-actions">
+                      <div className="app-action-buttons">
+                        <button type="button" className="app-action-btn" title="Edit" aria-label="Edit syllabus" onClick={()=>startEdit(s)}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                        <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete syllabus" onClick={()=>setConfirmDelete({ id: s._id, label: s.title || 'this syllabus' })}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4h6v2" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="syllabus-card-actions">
-                        <div className="app-action-buttons">
-                          <button type="button" className="app-action-btn" title="Edit" aria-label="Edit syllabus" onClick={()=>startEdit(s)}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                              <path d="M12 20h9" />
-                              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                            </svg>
-                          </button>
-                          <button type="button" className="app-action-btn app-action-btn--danger" title="Delete" aria-label="Delete syllabus" onClick={()=>setConfirmDelete({ id: s._id, label: s.title || 'this syllabus' })}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6l-1 14H6L5 6" />
-                              <path d="M10 11v6M14 11v6" />
-                              <path d="M9 6V4h6v2" />
-                            </svg>
-                          </button>
+                    </div>
+                  </article>
+                ))}
+                        <input className="syllabus-input" placeholder="Course code" value={editForm.courseCode} onChange={e=>setEditForm({...editForm,courseCode:e.target.value})} />
+                        <input className="syllabus-input" placeholder="Short description" value={editForm.description} onChange={e=>setEditForm({...editForm,description:e.target.value})} />
+                        <div style={{display:'inline-flex',gap:8}}>
+                          <button type="submit" className="admins-btn admins-btn--primary">Save</button>
+                          <button type="button" className="admins-btn" onClick={cancelEdit}>Cancel</button>
+>>>>>>> f223e24 (Resolve merge conflicts in frontend files)
                         </div>
                       </div>
                     </>

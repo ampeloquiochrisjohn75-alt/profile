@@ -3,6 +3,7 @@ import { fetchReports, createReport, updateReport, deleteReport, fetchStudents, 
 import ConfirmDialog from './ConfirmDialog';
 import './AdminList.css';
 import './Reports.css';
+import { useAccess } from '../context/AccessContext';
 
 export default function Reports({ showMessage }) {
   const [rows, setRows] = useState([]);
@@ -19,6 +20,8 @@ export default function Reports({ showMessage }) {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const studentRef = useRef(null);
   const facultyRef = useRef(null);
+  const access = useAccess();
+  const isAdmin = !!(access && access.isAdmin);
 
   const filteredStudents = useMemo(() => {
     const q = (studentQuery || '').trim().toLowerCase();
@@ -123,8 +126,7 @@ export default function Reports({ showMessage }) {
   // load recipients lists when admin (cached locally)
   useEffect(() => {
     let mounted = true;
-    const u = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
-    if (u && u.role === 'admin') {
+    if (isAdmin) {
       (async () => {
         try {
           const s = await fetchStudents({ limit: 1000 });
@@ -139,7 +141,7 @@ export default function Reports({ showMessage }) {
       })();
     }
     return () => { mounted = false; };
-  }, []);
+  }, [isAdmin]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -259,7 +261,7 @@ export default function Reports({ showMessage }) {
                   </svg>
                 </div>
                 <h2 className="admins-empty-title">No reports</h2>
-                <p className="admins-empty-text">No reports found. Create one using the form above.</p>
+                <p className="admins-empty-text">No reports found.{access && access.isAdmin ? ' Create one using the form above.' : ''}</p>
               </div>
             ) : (
               <div className="reports-list">

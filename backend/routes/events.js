@@ -3,6 +3,7 @@ const router = express.Router();
 const Event = require('../models/Event');
 const User = require('../models/Users');
 const Faculty = require('../models/Faculty');
+const Notification = require('../models/Notification');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // list events (authenticated)
@@ -88,6 +89,38 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
     if (Array.isArray(programs) && programs.length) e.programs = programs;
     await e.save();
     const out = await Event.findById(e._id).populate('departments');
+
+    // create notifications for admins and targeted students
+    (async () => {
+      try {
+        const recipients = [];
+        // notify all admins
+        const admins = await User.find({ role: 'admin' }, '_id');
+        admins.forEach(a => recipients.push(a._id));
+
+        // notify students when visibility allows (students or all)
+        if (!visibility || visibility === 'all' || visibility === 'students') {
+          const studentCond = { role: 'student' };
+          const or = [];
+          if (Array.isArray(departments) && departments.length) or.push({ department: { $in: departments } });
+          if (Array.isArray(programs) && programs.length) or.push({ courseCode: { $in: programs } });
+          const query = or.length ? { ...studentCond, $or: or } : studentCond;
+          const students = await User.find(query, '_id');
+          students.forEach(s => recipients.push(s._id));
+        }
+
+        // dedupe
+        const uniq = [...new Set(recipients.map(String))];
+        if (uniq.length) {
+          const when = e.start ? ` — ${new Date(e.start).toLocaleString()}` : '';
+          const docs = uniq.map(uid => ({ user: uid, message: `New event: ${e.title}${when}${e.location ? ` @ ${e.location}` : ''}`, link: `/events?id=${e._id}`, metadata: { eventId: e._id } }));
+          await Notification.insertMany(docs);
+        }
+      } catch (nerr) {
+        console.warn('Failed to create notifications for event create', nerr.message);
+      }
+    })();
+
     res.json(out);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -99,6 +132,37 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
     const upd = await Event.findById(req.params.id).populate('departments');
+
+    // notify recipients that event was updated
+    (async () => {
+      try {
+        const recipients = [];
+        const admins = await User.find({ role: 'admin' }, '_id');
+        admins.forEach(a => recipients.push(a._id));
+
+        const visibility = (req.body && req.body.visibility) || (upd && upd.visibility) || 'all';
+        const departments = (req.body && req.body.departments) || (upd && upd.departments) || [];
+        const programs = (req.body && req.body.programs) || (upd && upd.programs) || [];
+
+        if (!visibility || visibility === 'all' || visibility === 'students') {
+          const studentCond = { role: 'student' };
+          const or = [];
+          if (Array.isArray(departments) && departments.length) or.push({ department: { $in: departments } });
+          if (Array.isArray(programs) && programs.length) or.push({ courseCode: { $in: programs } });
+          const query = or.length ? { ...studentCond, $or: or } : studentCond;
+          const students = await User.find(query, '_id');
+          students.forEach(s => recipients.push(s._id));
+        }
+
+        const uniq = [...new Set(recipients.map(String))];
+        if (uniq.length) {
+          const when = upd.start ? ` — ${new Date(upd.start).toLocaleString()}` : '';
+          const docs = uniq.map(uid => ({ user: uid, message: `Updated event: ${upd.title}${when}${upd.location ? ` @ ${upd.location}` : ''}`, link: `/events?id=${upd._id}`, metadata: { eventId: upd._id } }));
+          await Notification.insertMany(docs);
+        }
+      } catch (nerr) { console.warn('Failed to create notifications for event update', nerr.message); }
+    })();
+
     res.json(upd);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -108,7 +172,40 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
 // delete (admin)
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
+    const ev = await Event.findById(req.params.id).populate('departments');
+    if (!ev) return res.status(404).json({ error: 'Not found' });
     await Event.findByIdAndDelete(req.params.id);
+
+    // notify recipients that event was deleted
+    (async () => {
+      try {
+        const recipients = [];
+        const admins = await User.find({ role: 'admin' }, '_id');
+        admins.forEach(a => recipients.push(a._id));
+
+        const visibility = ev.visibility || 'all';
+        const departments = ev.departments || [];
+        const programs = ev.programs || [];
+
+        if (!visibility || visibility === 'all' || visibility === 'students') {
+          const studentCond = { role: 'student' };
+          const or = [];
+          if (Array.isArray(departments) && departments.length) or.push({ department: { $in: departments } });
+          if (Array.isArray(programs) && programs.length) or.push({ courseCode: { $in: programs } });
+          const query = or.length ? { ...studentCond, $or: or } : studentCond;
+          const students = await User.find(query, '_id');
+          students.forEach(s => recipients.push(s._id));
+        }
+
+        const uniq = [...new Set(recipients.map(String))];
+        if (uniq.length) {
+          const when = ev.start ? ` — ${new Date(ev.start).toLocaleString()}` : '';
+          const docs = uniq.map(uid => ({ user: uid, message: `Event cancelled: ${ev.title}${when}${ev.location ? ` @ ${ev.location}` : ''}`, link: `/events?id=${ev._id}`, metadata: { eventId: ev._id } }));
+          await Notification.insertMany(docs);
+        }
+      } catch (nerr) { console.warn('Failed to create notifications for event delete', nerr.message); }
+    })();
+
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });

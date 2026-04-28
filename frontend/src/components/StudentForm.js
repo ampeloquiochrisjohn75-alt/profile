@@ -35,6 +35,14 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
     setViolations(Array.isArray(initial.violations) ? initial.violations.map(v => ({ ...v })) : []);
   }, [initial]);
 
+  // find CCS department object when available
+  const ccsDept = departments.find(d => (
+    d && (
+      (d.code && String(d.code).toUpperCase() === 'CCS') ||
+      (d.name && String(d.name).toUpperCase() === 'CCS')
+    )
+  ));
+
   const capitalizeName = (s) => {
     if (!s && s !== '') return s;
     return String(s || '').split(' ').map(p => p ? (p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()) : '').join(' ');
@@ -80,12 +88,14 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
 
   const handle = (e) => {
     const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+  };
+
+  const handleNameBlur = (e) => {
+    const { name, value } = e.target;
     if (name === 'firstName' || name === 'lastName') {
-      // keep input normalized with capitalized words as user types
       const v = capitalizeName(value);
       setForm(f => ({ ...f, [name]: v }));
-    } else {
-      setForm(f => ({ ...f, [name]: value }));
     }
   };
 
@@ -187,11 +197,11 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
               ) : null}
               <div className="form-group">
                 <label htmlFor="sf-firstName">First name {(isRegistration || (!initial && !allowSkills)) ? '*' : ''}</label>
-                <input id="sf-firstName" type="text" name="firstName" value={form.firstName} onChange={handle} required={isRegistration || (!initial && !allowSkills)} autoComplete="given-name" />
+                <input id="sf-firstName" type="text" name="firstName" value={form.firstName} onChange={handle} onBlur={handleNameBlur} required={isRegistration || (!initial && !allowSkills)} autoComplete="given-name" />
               </div>
               <div className="form-group">
                 <label htmlFor="sf-lastName">Last name {(isRegistration || (!initial && !allowSkills)) ? '*' : ''}</label>
-                <input id="sf-lastName" type="text" name="lastName" value={form.lastName} onChange={handle} required={isRegistration || (!initial && !allowSkills)} autoComplete="family-name" />
+                <input id="sf-lastName" type="text" name="lastName" value={form.lastName} onChange={handle} onBlur={handleNameBlur} required={isRegistration || (!initial && !allowSkills)} autoComplete="family-name" />
               </div>
               <div className="form-group form-group--span2">
                 <label htmlFor="sf-email">Email {(isRegistration || (!initial && !allowSkills)) ? '*' : ''}</label>
@@ -232,13 +242,10 @@ export default function StudentForm({ onSubmit, onCancel, initial = null, allowS
                 </div>
               </div>
               <div className="form-group">
-                <label htmlFor="sf-department">Department</label>
-                <select id="sf-department" name="department" value={form.department} onChange={handle}>
-                  <option value="">None</option>
-                  {departments.map(d => (
-                    <option key={d._id} value={d._id}>{d.name}{d.code ? ` (${d.code})` : ''}</option>
-                  ))}
-                </select>
+                <label>Department</label>
+                {/* Site is CCS-only: show CCS as read-only and keep department id in state */}
+                <input type="text" value={ccsDept ? ccsDept.name : 'CCS'} readOnly disabled />
+                <input type="hidden" name="department" value={form.department || ''} />
               </div>
             </div>
           </section>

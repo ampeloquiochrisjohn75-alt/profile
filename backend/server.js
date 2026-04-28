@@ -51,6 +51,8 @@ const coursesRouter = require('./routes/courses');
 app.use('/api/courses', coursesRouter);
 const eventsRouter = require('./routes/events');
 app.use('/api/events', eventsRouter);
+const notificationsRouter = require('./routes/notifications');
+app.use('/api/notifications', notificationsRouter);
 const sectionsRouter = require('./routes/sections');
 app.use('/api/sections', sectionsRouter);
 const schedulesRouter = require('./routes/schedules');

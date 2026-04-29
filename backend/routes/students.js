@@ -178,16 +178,64 @@ router.get('/export', requireAuth, requireAdmin, async (req, res) => {
       const re = new RegExp(q, 'i');
       filter.$or = [{ firstName: re }, { lastName: re }, { studentId: re }, { email: re }];
     }
+    const students = await Student.find(filter).sort({ createdAt: -1 }).populate('department').lean();
 
-    const students = await Student.find(filter).sort({ createdAt: -1 }).populate('department');
-    const header = ['studentId','firstName','lastName','email','course','courseCode','skills','activities','affiliations'];
-    const rows = students.map(s => ([s.studentId, s.firstName, s.lastName, s.email, s.course, s.courseCode || '', (s.skills||[]).map(sk => typeof sk === 'string' ? sk : `${sk.name}:${sk.level}`).join('|'), (s.nonAcademicActivities||[]).join('|'), (s.affiliations||[]).join('|')] ))
-      .map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+    // Preload sections that contain any of the returned students to include Section in the export
+    let sectionMap = {};
+    try {
+      const Section = require('../models/Section');
+      const sectionDocs = await Section.find({ students: { $in: students.map(s => s._id) } }).select('name courseCode students').lean();
+      for (const sec of sectionDocs) {
+        const label = `${sec.name || ''}${sec.courseCode ? ` (${sec.courseCode})` : ''}`.trim();
+        (sec.students || []).forEach(stId => { sectionMap[String(stId)] = label; });
+      }
+    } catch (e) {
+      // ignore if Section model/query unavailable
+    }
 
-    const csv = [header.join(','), ...rows].join('\n');
-    res.setHeader('Content-Type', 'text/csv');
+    // Friendly header suitable for Excel
+    const header = [
+      'Student ID','First Name','Last Name','Email','Phone','Course','Course Code','Department','Year Level','Section','Skills','Activities','Affiliations','Created At'
+    ];
+
+    const formatSkill = (sk) => {
+      if (!sk) return '';
+      if (typeof sk === 'string') return sk;
+      const name = String(sk.name || sk.skill || '').replace(/\b\w/g, c => c.toUpperCase());
+      return sk.level ? `${name} (${sk.level})` : name;
+    };
+
+    const rows = students.map(s => {
+      const deptName = s.department && s.department.name ? s.department.name : (s.department || '');
+      const skillsStr = (s.skills || []).map(formatSkill).join('; ');
+      const activitiesStr = (s.nonAcademicActivities || []).join('; ');
+      const affStr = (s.affiliations || []).join('; ');
+      const section = sectionMap[String(s._id)] || '';
+      const createdAt = s.createdAt ? new Date(s.createdAt).toISOString().slice(0,10) : '';
+      return [
+        s.studentId || '',
+        s.firstName || '',
+        s.lastName || '',
+        s.email || '',
+        s.phone || '',
+        s.course || '',
+        s.courseCode || '',
+        deptName || '',
+        s.yearLevel || '',
+        section,
+        skillsStr,
+        activitiesStr,
+        affStr,
+        createdAt
+      ];
+    }).map(r => r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+
+    // Use CRLF for Windows/Excel and prepend BOM so Excel recognizes UTF-8
+    const csvBody = [header.map(h => `"${h.replace(/"/g,'""')}"`).join(','), ...rows].join('\r\n');
+    const bom = '\uFEFF';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="students_export.csv"');
-    res.send(csv);
+    res.send(bom + csvBody + '\r\n');
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -198,9 +246,21 @@ router.get('/:id', requireAuth, async (req, res) => {
   try {
     const student = await Student.findById(req.params.id).populate('department');
     if (!student) return res.status(404).json({ error: 'Not found' });
+
+    // try to find any Section that includes this student so the frontend can show it
+    let section = null;
+    try {
+      const Section = require('../models/Section');
+      section = await Section.findOne({ students: student._id }).select('name courseCode faculty').populate('faculty', 'firstName lastName title');
+    } catch (e) {
+      // ignore if Section model isn't available for some reason
+    }
+
     // allow owner (student) to view their own profile or admin
     if (req.user.role === 'admin' || String(student.email || '') === String(req.user.email || '')) {
-      return res.json(student);
+      const out = student.toObject();
+      if (section) out.section = section;
+      return res.json(out);
     }
     return res.status(403).json({ error: 'Forbidden' });
   } catch (err) {

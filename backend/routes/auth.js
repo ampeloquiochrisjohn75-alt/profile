@@ -110,6 +110,15 @@ router.get('/me', requireAuth, async (req, res) => {
       lastName: u.lastName,
       course: u.course,
     };
+    // try to find any Section that includes this user so the frontend can show it on the profile
+    try {
+      const Section = require('../models/Section');
+      const section = await Section.findOne({ students: u._id }).select('name courseCode faculty').populate('faculty', 'firstName lastName title');
+      if (section) u.section = section;
+    } catch (e) {
+      // ignore if Section model isn't available or query fails
+    }
+
     if (u.role === 'student') {
       return res.json({ user: out, profile: u });
     }

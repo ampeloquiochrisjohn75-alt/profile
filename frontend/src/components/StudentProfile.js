@@ -66,6 +66,14 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
       ? student.department.name
       : student.department || '—';
 
+  const sectionLabel = (() => {
+    if (!student.section) return '—';
+    if (typeof student.section === 'string') return student.section;
+    const name = student.section.name || student.section._id || '';
+    const code = student.section.courseCode ? ` (${student.section.courseCode})` : '';
+    return (name || '—') + code;
+  })();
+
   return (
     <div className="student-profile-page">
       <header className="student-profile-hero">
@@ -118,6 +126,10 @@ export default function StudentProfile({ student, currentUser, onBack, onUpdate,
               <div className="student-profile-row">
                 <span className="student-profile-label">Department</span>
                 <span className="student-profile-value">{deptLabel}</span>
+              </div>
+              <div className="student-profile-row">
+                <span className="student-profile-label">Section</span>
+                <span className="student-profile-value">{sectionLabel}</span>
               </div>
               <div className="student-profile-row">
                 <span className="student-profile-label">Email</span>
